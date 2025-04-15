@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -14,13 +13,13 @@ import { CheckCircle } from "lucide-react";
 
 // Define the type for a dimension
 interface Dimension {
-    id: string;
-    name: string;
-    description: string;
-    status: string;
-    questions: number;
-    completed: number;
-  }
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  questions: number;
+  completed: number;
+}
 
 // Mock assessment data
 const mockAssessmentData = {
@@ -121,7 +120,6 @@ const mockAssessmentData = {
 };
 
 // Calculate overall progress
-
 const calculateOverallProgress = (dimensions: Dimension[]) => {
   const totalQuestions = dimensions.reduce((sum, dim) => sum + dim.questions, 0);
   const completedQuestions = dimensions.reduce((sum, dim) => sum + dim.completed, 0);
@@ -171,50 +169,50 @@ export default function AssessmentPage() {
 
   return (
     <AppLayout>
-      <div className="container py-10">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+      <div className="container py-6 sm:py-8 md:py-10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Assessment</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Assessment</h1>
+            <p className="text-sm md:text-base text-muted-foreground">
               Complete the assessment to improve your compatibility results
             </p>
           </div>
-          <div className="mt-4 md:mt-0 flex items-center gap-2">
-            <span className="text-sm font-medium">Overall Progress:</span>
-            <div className="w-40 h-2 bg-muted rounded-full overflow-hidden">
+          <div className="w-full md:w-auto flex items-center gap-2">
+            <span className="text-xs sm:text-sm font-medium whitespace-nowrap">Progress:</span>
+            <div className="w-full md:w-40 h-2 bg-muted rounded-full overflow-hidden">
               <div
                 className="h-full bg-primary rounded-full"
                 style={{ width: `${overallProgress}%` }}
               />
             </div>
-            <span className="text-sm font-medium">{overallProgress}%</span>
+            <span className="text-xs sm:text-sm font-medium">{overallProgress}%</span>
           </div>
         </div>
 
         {view === "dimensions" && (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {mockAssessmentData.dimensions.map((dimension) => (
               <Card key={dimension.id} className={dimension.status === "completed" ? "border-green-200" : ""}>
-                <CardHeader className="pb-3">
+                <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle>{dimension.name}</CardTitle>
-                      <CardDescription>{dimension.description}</CardDescription>
+                      <CardTitle className="text-base sm:text-lg">{dimension.name}</CardTitle>
+                      <CardDescription className="text-xs sm:text-sm">{dimension.description}</CardDescription>
                     </div>
                     {dimension.status === "completed" && (
-                      <Badge className="bg-green-500">
-                        <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                      <Badge className="bg-green-500 text-xs">
+                        <CheckCircle className="h-3 w-3 mr-1" />
                         Completed
                       </Badge>
                     )}
                     {dimension.status === "in_progress" && (
-                      <Badge variant="secondary">In Progress</Badge>
+                      <Badge variant="secondary" className="text-xs">In Progress</Badge>
                     )}
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-4 sm:px-6 py-3 sm:py-4">
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-xs sm:text-sm">
                       <span>Progress</span>
                       <span>
                         {dimension.completed}/{dimension.questions} Questions
@@ -228,15 +226,15 @@ export default function AssessmentPage() {
                     />
                   </div>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="px-4 sm:px-6 py-3 sm:py-4">
                   {dimension.status === "completed" && (
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full text-xs sm:text-sm">
                       Review Answers
                     </Button>
                   )}
                   {dimension.status === "in_progress" && (
                     <Button
-                      className="w-full"
+                      className="w-full text-xs sm:text-sm"
                       onClick={handleStartAssessment}
                     >
                       Continue
@@ -245,7 +243,7 @@ export default function AssessmentPage() {
                   {dimension.status === "not_started" && (
                     <Button
                       variant="outline"
-                      className="w-full"
+                      className="w-full text-xs sm:text-sm"
                       disabled
                     >
                       Start Assessment
@@ -259,32 +257,33 @@ export default function AssessmentPage() {
 
         {view === "questions" && (
           <Card className="max-w-3xl mx-auto">
-            <CardHeader>
+            <CardHeader className="p-4 sm:p-6">
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle>{currentDimension?.name || "Unknown Dimension"}</CardTitle>
-                  <CardDescription>Question {currentQuestionIndex + 1} of {mockAssessmentData.currentQuestions.length}</CardDescription>
+                  <CardTitle className="text-base sm:text-lg">{currentDimension?.name || "Unknown Dimension"}</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">Question {currentQuestionIndex + 1} of {mockAssessmentData.currentQuestions.length}</CardDescription>
                 </div>
-                <Button variant="ghost" size="sm" onClick={handleBackToDimensions}>
+                <Button variant="ghost" size="sm" onClick={handleBackToDimensions} className="text-xs">
                   Save & Exit
                 </Button>
               </div>
               <Progress
                 value={((currentQuestionIndex + 1) / mockAssessmentData.currentQuestions.length) * 100}
+                className="mt-4"
               />
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <h3 className="text-lg font-medium">{currentQuestion.text}</h3>
+            <CardContent className="px-4 sm:px-6 py-4">
+              <div className="space-y-4 sm:space-y-6">
+                <h3 className="text-base sm:text-lg font-medium">{currentQuestion.text}</h3>
                 <RadioGroup
                   value={responses[currentQuestion.id]}
                   onValueChange={handleResponseChange}
-                  className="gap-3"
+                  className="gap-2 sm:gap-3"
                 >
                   {currentQuestion.options.map((option) => (
-                    <div key={option.value} className="flex items-center space-x-2 border rounded-lg p-4 cursor-pointer hover:bg-muted/50">
+                    <div key={option.value} className="flex items-center space-x-2 border rounded-lg p-3 sm:p-4 cursor-pointer hover:bg-muted/50">
                       <RadioGroupItem value={option.value} id={`option-${option.value}`} />
-                      <Label htmlFor={`option-${option.value}`} className="cursor-pointer w-full">
+                      <Label htmlFor={`option-${option.value}`} className="cursor-pointer w-full text-xs sm:text-sm">
                         {option.label}
                       </Label>
                     </div>
@@ -292,15 +291,17 @@ export default function AssessmentPage() {
                 </RadioGroup>
               </div>
             </CardContent>
-            <CardFooter className="flex justify-between">
+            <CardFooter className="p-4 sm:p-6 flex justify-between">
               <Button
                 variant="outline"
+                size="sm"
                 onClick={handlePreviousQuestion}
                 disabled={currentQuestionIndex === 0}
               >
                 Previous
               </Button>
               <Button
+                size="sm"
                 onClick={handleNextQuestion}
                 disabled={!responses[currentQuestion.id]}
               >
@@ -314,37 +315,37 @@ export default function AssessmentPage() {
 
         {view === "completion" && (
           <Card className="max-w-3xl mx-auto text-center">
-            <CardHeader>
-              <div className="mx-auto w-16 h-16 flex items-center justify-center rounded-full bg-green-100 text-green-600 mb-4">
-                <CheckCircle className="h-8 w-8" />
+            <CardHeader className="p-4 sm:p-6">
+              <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-full bg-green-100 text-green-600 mb-4">
+                <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8" />
               </div>
-              <CardTitle className="text-xl">Values & Beliefs Assessment Completed!</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg sm:text-xl">Values & Beliefs Assessment Completed!</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 You've completed this dimension of your compatibility assessment.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 sm:px-6 py-4">
               <div className="space-y-2">
-                <p>
+                <p className="text-xs sm:text-sm">
                   This information will be used to calculate your compatibility with others.
                   Continue with other assessment dimensions to get even more accurate results.
                 </p>
-                <div className="py-6">
+                <div className="py-4 sm:py-6">
                   <Separator />
                 </div>
-                <p className="font-medium">Overall Assessment Progress</p>
-                <div className="flex justify-between text-sm mb-2">
+                <p className="font-medium text-sm sm:text-base">Overall Assessment Progress</p>
+                <div className="flex justify-between text-xs sm:text-sm mb-2">
                   <span>Progress</span>
                   <span>{overallProgress}% Complete</span>
                 </div>
                 <Progress value={overallProgress} />
               </div>
             </CardContent>
-            <CardFooter className="flex justify-center gap-4">
-              <Button variant="outline" onClick={handleBackToDimensions}>
+            <CardFooter className="p-4 sm:p-6 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+              <Button variant="outline" onClick={handleBackToDimensions} className="w-full sm:w-auto text-xs sm:text-sm">
                 View All Dimensions
               </Button>
-              <Button onClick={handleBackToDimensions}>
+              <Button onClick={handleBackToDimensions} className="w-full sm:w-auto text-xs sm:text-sm">
                 Continue Assessment
               </Button>
             </CardFooter>

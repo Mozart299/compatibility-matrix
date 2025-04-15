@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -17,6 +16,7 @@ interface CompatibilityCardProps {
     score: number;
   }[];
   actionText?: string;
+  className?: string;
 }
 
 // Helper function to get compatibility level description
@@ -37,6 +37,7 @@ export function CompatibilityCard({
   challenges = [],
   dimensions = [],
   actionText = "View Details",
+  className = "",
 }: CompatibilityCardProps) {
   const { level, color } = getCompatibilityLevel(score);
   
@@ -47,28 +48,28 @@ export function CompatibilityCard({
     .join("");
 
   return (
-    <Card className="overflow-hidden">
-      <div className="relative p-6 flex flex-col items-center text-center">
-        <Badge className={`absolute top-4 right-4 ${color}`}>
+    <Card className={`overflow-hidden ${className}`}>
+      <div className="relative p-4 sm:p-6 flex flex-col items-center text-center">
+        <Badge className={`absolute top-3 right-3 sm:top-4 sm:right-4 text-xs sm:text-sm ${color}`}>
           {score}% · {level}
         </Badge>
         
-        <Avatar className="h-20 w-20 mb-4">
+        <Avatar className="h-16 w-16 sm:h-20 sm:w-20 mb-3 sm:mb-4">
           <AvatarImage src={avatar} alt={name} />
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
         
-        <h3 className="text-xl font-medium">{name}</h3>
+        <h3 className="text-lg sm:text-xl font-medium truncate max-w-full">{name}</h3>
         
         {dimensions.length > 0 && (
-          <div className="w-full mt-4 space-y-2">
+          <div className="w-full mt-3 sm:mt-4 space-y-2">
             {dimensions.slice(0, 3).map((dimension) => (
               <div key={dimension.name} className="w-full">
-                <div className="flex justify-between text-sm mb-1">
-                  <span>{dimension.name}</span>
-                  <span>{dimension.score}%</span>
+                <div className="flex justify-between text-xs sm:text-sm mb-1">
+                  <span className="truncate pr-2">{dimension.name}</span>
+                  <span className="flex-shrink-0">{dimension.score}%</span>
                 </div>
-                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                <div className="h-1 sm:h-1.5 w-full bg-muted rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full ${
                       dimension.score >= 90
@@ -91,27 +92,27 @@ export function CompatibilityCard({
       </div>
       
       {(strengths.length > 0 || challenges.length > 0) && (
-        <CardContent className="px-6 py-0">
-          <div className="border-t pt-4 space-y-2">
+        <CardContent className="px-4 sm:px-6 py-0">
+          <div className="border-t pt-3 sm:pt-4 space-y-2">
             {strengths.length > 0 && (
               <div>
-                <p className="text-sm font-medium">Top Strength</p>
-                <p className="text-sm text-muted-foreground">{strengths[0]}</p>
+                <p className="text-xs sm:text-sm font-medium">Top Strength</p>
+                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{strengths[0]}</p>
               </div>
             )}
             
             {challenges.length > 0 && (
               <div>
-                <p className="text-sm font-medium">Top Challenge</p>
-                <p className="text-sm text-muted-foreground">{challenges[0]}</p>
+                <p className="text-xs sm:text-sm font-medium">Top Challenge</p>
+                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{challenges[0]}</p>
               </div>
             )}
           </div>
         </CardContent>
       )}
       
-      <CardFooter className="px-6 py-4 flex">
-        <Button className="w-full" asChild>
+      <CardFooter className="px-4 sm:px-6 py-3 sm:py-4 flex">
+        <Button className="w-full text-sm" asChild>
           <Link href={`/compatibility/${userId}`}>{actionText}</Link>
         </Button>
       </CardFooter>
