@@ -18,7 +18,7 @@ export default function CompatibilityRadarChart({
   className
 }: RadarChartProps) {
   // Convert data format for the radar chart
-  const [chartData, setChartData] = useState([]);
+  const [chartData, setChartData] = useState<{ subject: string; [key: string]: number | string; fullMark: number }[]>([]);
 
   useEffect(() => {
     // Transform the data into the format needed for Recharts
