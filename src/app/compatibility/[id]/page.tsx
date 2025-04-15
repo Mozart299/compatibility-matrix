@@ -1,4 +1,6 @@
+'use client'
 
+import { useState } from "react";
 import { AppLayout } from "@/components/layouts/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +15,11 @@ import {
   MessagesSquare, 
   UserCircle2 
 } from "lucide-react";
+
+
+interface CompatibilityReportPageParams {
+  id: string;
+}
 
 // Mock compatibility data for a specific person
 const mockCompatibilityData = {
@@ -84,7 +91,7 @@ const mockCompatibilityData = {
 };
 
 // Helper function to get compatibility level description
-const getCompatibilityLevel = (score) => {
+const getCompatibilityLevel = (score: number) => {
   if (score >= 90) return { level: "Exceptional", description: "Highly aligned in critical areas" };
   if (score >= 75) return { level: "Strong", description: "Well-matched with minor differences" };
   if (score >= 60) return { level: "Moderate", description: "Workable differences requiring some adaptation" };
@@ -92,81 +99,84 @@ const getCompatibilityLevel = (score) => {
   return { level: "Limited", description: "Fundamental differences in key areas" };
 };
 
-export default function CompatibilityReportPage({ params }) {
+
+export default function CompatibilityReportPage({ params }: { params: CompatibilityReportPageParams }) {
   const { id } = params;
   const { level, description } = getCompatibilityLevel(mockCompatibilityData.overallScore);
+  const [activeTab, setActiveTab] = useState("personality");
   
   return (
     <AppLayout>
-      <div className="container py-10">
-        <div className="mb-8">
+      <div className="container py-6 sm:py-8 md:py-10">
+        <div className="mb-6 md:mb-8">
           <Button variant="ghost" size="sm" asChild className="mb-4">
             <Link href="/matrix">
               <ChevronLeft className="h-4 w-4 mr-2" />
-              Back to Matrix
+              <span className="hidden sm:inline">Back to Matrix</span>
+              <span className="sm:hidden">Back</span>
             </Link>
           </Button>
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
                 Compatibility with {mockCompatibilityData.person.name}
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-sm md:text-base text-muted-foreground">
                 Detailed analysis of your compatibility across multiple dimensions
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm">
-                <UserCircle2 className="h-4 w-4 mr-2" />
-                View Profile
+            <div className="flex items-center gap-2 sm:gap-3 w-full md:w-auto">
+              <Button variant="outline" size="sm" className="flex-1 md:flex-auto">
+                <UserCircle2 className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="text-xs sm:text-sm">Profile</span>
               </Button>
-              <Button size="sm">
-                <MessagesSquare className="h-4 w-4 mr-2" />
-                Message
+              <Button size="sm" className="flex-1 md:flex-auto">
+                <MessagesSquare className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="text-xs sm:text-sm">Message</span>
               </Button>
             </div>
           </div>
         </div>
 
         {/* Overall Compatibility Card */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
+        <Card className="mb-6 md:mb-8">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex flex-col md:flex-row gap-6 items-center">
               <div className="flex flex-col items-center">
                 <div className="relative">
-                  <svg className="w-40 h-40">
+                  <svg className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40">
                     <circle
                       className="text-muted-foreground/20"
                       strokeWidth="8"
                       stroke="currentColor"
                       fill="transparent"
-                      r="62"
-                      cx="80"
-                      cy="80"
+                      r="56"
+                      cx="64"
+                      cy="64"
                     />
                     <circle
                       className="text-primary"
                       strokeWidth="8"
-                      strokeDasharray={390}
-                      strokeDashoffset={390 - (390 * mockCompatibilityData.overallScore) / 100}
+                      strokeDasharray={350}
+                      strokeDashoffset={350 - (350 * mockCompatibilityData.overallScore) / 100}
                       strokeLinecap="round"
                       stroke="currentColor"
                       fill="transparent"
-                      r="62"
-                      cx="80"
-                      cy="80"
+                      r="56"
+                      cx="64"
+                      cy="64"
                     />
                   </svg>
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-                    <div className="text-4xl font-bold">{mockCompatibilityData.overallScore}</div>
-                    <div className="text-sm text-muted-foreground">Overall Score</div>
+                    <div className="text-2xl sm:text-3xl md:text-4xl font-bold">{mockCompatibilityData.overallScore}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Overall Score</div>
                   </div>
                 </div>
-                <Badge className="mt-2 text-lg py-1.5 px-3">
+                <Badge className="mt-2 text-sm sm:text-lg py-1 px-2 sm:py-1.5 sm:px-3">
                   {level} Compatibility
                 </Badge>
-                <p className="text-sm text-muted-foreground mt-2 text-center max-w-xs">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-2 text-center max-w-xs">
                   {description}
                 </p>
               </div>
@@ -182,8 +192,8 @@ export default function CompatibilityReportPage({ params }) {
                       <li key={index} className="flex gap-2">
                         <Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
                         <div>
-                          <p className="font-medium">{strength.title}</p>
-                          <p className="text-sm text-muted-foreground">{strength.description}</p>
+                          <p className="font-medium text-sm sm:text-base">{strength.title}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">{strength.description}</p>
                         </div>
                       </li>
                     ))}
@@ -200,8 +210,8 @@ export default function CompatibilityReportPage({ params }) {
                       <li key={index} className="flex gap-2">
                         <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                         <div>
-                          <p className="font-medium">{challenge.title}</p>
-                          <p className="text-sm text-muted-foreground">{challenge.description}</p>
+                          <p className="font-medium text-sm sm:text-base">{challenge.title}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">{challenge.description}</p>
                         </div>
                       </li>
                     ))}
@@ -213,17 +223,17 @@ export default function CompatibilityReportPage({ params }) {
         </Card>
 
         {/* Dimension Breakdown */}
-        <h2 className="text-2xl font-bold mb-6">Dimension Breakdown</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+        <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Dimension Breakdown</h2>
+        <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
           {mockCompatibilityData.dimensionScores.map((dimension) => (
-            <Card key={dimension.id}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">{dimension.name}</CardTitle>
-                <CardDescription>Compatibility score in this dimension</CardDescription>
+            <Card key={dimension.id} className="h-full">
+              <CardHeader className="pb-2 sm:pb-3">
+                <CardTitle className="text-base sm:text-lg">{dimension.name}</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Compatibility score in this dimension</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-3xl font-bold">{dimension.score}</div>
+                  <div className="text-2xl sm:text-3xl font-bold">{dimension.score}</div>
                   <Badge 
                     className={dimension.score >= 90 ? "bg-green-500" : 
                              dimension.score >= 75 ? "bg-green-400" : 
@@ -245,19 +255,25 @@ export default function CompatibilityReportPage({ params }) {
         </div>
 
         {/* Detailed Analysis Tabs */}
-        <h2 className="text-2xl font-bold mb-6">Detailed Analysis</h2>
-        <Tabs defaultValue="personality" className="mb-8">
-          <TabsList className="mb-4">
-            <TabsTrigger value="personality">Personality</TabsTrigger>
-            <TabsTrigger value="interests">Interests & Activities</TabsTrigger>
-            <TabsTrigger value="communication">Communication</TabsTrigger>
-            <TabsTrigger value="values">Values & Beliefs</TabsTrigger>
-          </TabsList>
+        <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Detailed Analysis</h2>
+        <Tabs 
+          value={activeTab} 
+          onValueChange={setActiveTab} 
+          className="mb-8"
+        >
+          <div className="overflow-x-auto pb-2">
+            <TabsList className="mb-4 w-auto inline-flex">
+              <TabsTrigger value="personality">Personality</TabsTrigger>
+              <TabsTrigger value="interests">Interests</TabsTrigger>
+              <TabsTrigger value="communication">Communication</TabsTrigger>
+              <TabsTrigger value="values">Values</TabsTrigger>
+            </TabsList>
+          </div>
           
           <TabsContent value="personality">
             <Card>
               <CardHeader>
-                <CardTitle>Personality Traits Comparison</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">Personality Traits Comparison</CardTitle>
                 <CardDescription>
                   How your personality traits align with {mockCompatibilityData.person.name}
                 </CardDescription>
@@ -265,37 +281,38 @@ export default function CompatibilityReportPage({ params }) {
               <CardContent>
                 <div className="space-y-6">
                   {Object.keys(mockCompatibilityData.personalityDetails.user).map((trait) => {
-                    const userScore = mockCompatibilityData.personalityDetails.user[trait];
-                    const otherScore = mockCompatibilityData.personalityDetails.other[trait];
+                    const typedTrait = trait as keyof typeof mockCompatibilityData.personalityDetails.user;
+                    const userScore = mockCompatibilityData.personalityDetails.user[typedTrait];
+                    const otherScore = mockCompatibilityData.personalityDetails.other[typedTrait];
                     const traitName = trait.charAt(0).toUpperCase() + trait.slice(1).replace(/([A-Z])/g, ' $1');
                     
                     return (
                       <div key={trait}>
                         <div className="flex justify-between mb-1">
-                          <span className="font-medium">{traitName}</span>
+                          <span className="font-medium text-sm sm:text-base">{traitName}</span>
                         </div>
-                        <div className="relative h-8 w-full bg-muted rounded-lg overflow-hidden">
+                        <div className="relative h-16 sm:h-12 w-full bg-muted rounded-lg overflow-hidden">
                           <div className="absolute top-0 left-0 h-full bg-blue-200 opacity-30" style={{ width: '100%' }} />
                           
                           {/* User's score */}
                           <div 
-                            className="absolute top-0 h-4 mt-2 bg-blue-500 rounded-full"
+                            className="absolute top-0 h-3 sm:h-4 mt-2 bg-blue-500 rounded-full"
                             style={{ left: `${Math.min(userScore, 100)}%`, transform: 'translateX(-50%)' }}
                           >
                             <div className="w-3 h-3 bg-blue-500 rounded-full" />
-                            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
-                              <span className="text-xs font-semibold px-1 rounded bg-blue-100 text-blue-700">You: {userScore}%</span>
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 whitespace-nowrap mt-1">
+                              <span className="text-xs px-1 rounded bg-blue-100 text-blue-700 font-semibold">You: {userScore}%</span>
                             </div>
                           </div>
                           
                           {/* Other person's score */}
                           <div 
-                            className="absolute top-0 h-4 mt-2 bg-purple-500 rounded-full"
+                            className="absolute top-0 h-3 sm:h-4 mt-2 bg-purple-500 rounded-full"
                             style={{ left: `${Math.min(otherScore, 100)}%`, transform: 'translateX(-50%)' }}
                           >
                             <div className="w-3 h-3 bg-purple-500 rounded-full" />
-                            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
-                              <span className="text-xs font-semibold px-1 rounded bg-purple-100 text-purple-700">Alex: {otherScore}%</span>
+                            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 whitespace-nowrap mt-3 sm:mt-1">
+                              <span className="text-xs px-1 rounded bg-purple-100 text-purple-700 font-semibold">Alex: {otherScore}%</span>
                             </div>
                           </div>
                           
@@ -323,53 +340,53 @@ export default function CompatibilityReportPage({ params }) {
           <TabsContent value="interests">
             <Card>
               <CardHeader>
-                <CardTitle>Interests & Activities</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">Interests & Activities</CardTitle>
                 <CardDescription>
                   Shared and individual interests between you and {mockCompatibilityData.person.name}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   <div>
-                    <h3 className="font-medium text-lg mb-3">Shared Interests</h3>
+                    <h3 className="font-medium text-base sm:text-lg mb-3">Shared Interests</h3>
                     <div className="space-y-2">
                       {mockCompatibilityData.interests.shared.map((interest, index) => (
                         <div key={index} className="flex items-center gap-2 p-2 rounded-md bg-green-50 border border-green-100">
                           <Check className="h-4 w-4 text-green-500" />
-                          <span>{interest}</span>
+                          <span className="text-sm">{interest}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                   
                   <div>
-                    <h3 className="font-medium text-lg mb-3">Your Unique Interests</h3>
+                    <h3 className="font-medium text-base sm:text-lg mb-3">Your Unique Interests</h3>
                     <div className="space-y-2">
                       {mockCompatibilityData.interests.user.map((interest, index) => (
                         <div key={index} className="flex items-center gap-2 p-2 rounded-md bg-blue-50 border border-blue-100">
                           <UserCircle2 className="h-4 w-4 text-blue-500" />
-                          <span>{interest}</span>
+                          <span className="text-sm">{interest}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                   
-                  <div>
-                    <h3 className="font-medium text-lg mb-3">{mockCompatibilityData.person.name}'s Unique Interests</h3>
+                  <div className="sm:col-span-2 lg:col-span-1">
+                    <h3 className="font-medium text-base sm:text-lg mb-3">{mockCompatibilityData.person.name}'s Unique Interests</h3>
                     <div className="space-y-2">
                       {mockCompatibilityData.interests.other.map((interest, index) => (
                         <div key={index} className="flex items-center gap-2 p-2 rounded-md bg-purple-50 border border-purple-100">
                           <UserCircle2 className="h-4 w-4 text-purple-500" />
-                          <span>{interest}</span>
+                          <span className="text-sm">{interest}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
                 
-                <div className="mt-8 p-4 bg-muted rounded-lg">
-                  <h3 className="font-medium mb-2">Activity Compatibility</h3>
-                  <p className="text-muted-foreground">
+                <div className="mt-6 sm:mt-8 p-3 sm:p-4 bg-muted rounded-lg">
+                  <h3 className="font-medium mb-2 text-sm sm:text-base">Activity Compatibility</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     You share 4 key interests, which creates a strong foundation for spending quality time together.
                     Your unique interests add variety to your relationship, while still having enough common activities
                     to enjoy together.
@@ -382,42 +399,42 @@ export default function CompatibilityReportPage({ params }) {
           <TabsContent value="communication">
             <Card>
               <CardHeader>
-                <CardTitle>Communication Styles</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">Communication Styles</CardTitle>
                 <CardDescription>
                   How your communication approaches interact
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  <div className="border rounded-lg p-4">
-                    <h3 className="font-medium mb-2">Your Communication Style</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6">
+                  <div className="border rounded-lg p-3 sm:p-4">
+                    <h3 className="font-medium mb-2 text-sm sm:text-base">Your Communication Style</h3>
                     <Badge className="bg-blue-500 mb-2">{mockCompatibilityData.communicationStyles.user}</Badge>
-                    <p className="text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       You tend to communicate in a straightforward manner, prioritizing clarity and efficiency.
                       You express your thoughts and feelings explicitly and prefer others to do the same.
                     </p>
                   </div>
                   
-                  <div className="border rounded-lg p-4">
-                    <h3 className="font-medium mb-2">{mockCompatibilityData.person.name}'s Communication Style</h3>
+                  <div className="border rounded-lg p-3 sm:p-4">
+                    <h3 className="font-medium mb-2 text-sm sm:text-base">{mockCompatibilityData.person.name}'s Communication Style</h3>
                     <Badge className="bg-purple-500 mb-2">{mockCompatibilityData.communicationStyles.other}</Badge>
-                    <p className="text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Alex tends to communicate diplomatically, prioritizing harmony and relationship preservation.
                       They are careful with word choice and may sometimes hint at rather than directly state concerns.
                     </p>
                   </div>
                 </div>
                 
-                <div className="border rounded-lg p-4 bg-muted/30">
-                  <h3 className="font-medium mb-2">Communication Dynamics</h3>
-                  <p className="text-muted-foreground">
+                <div className="border rounded-lg p-3 sm:p-4 bg-muted/30">
+                  <h3 className="font-medium mb-2 text-sm sm:text-base">Communication Dynamics</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     {mockCompatibilityData.communicationStyles.dynamics}
                   </p>
                   
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <h4 className="text-sm font-medium mb-2">Strengths</h4>
-                      <ul className="text-sm space-y-1">
+                      <h4 className="text-xs sm:text-sm font-medium mb-2">Strengths</h4>
+                      <ul className="text-xs sm:text-sm space-y-1">
                         <li className="flex items-start gap-2">
                           <Check className="h-4 w-4 text-green-500 mt-0.5" />
                           <span>You can complement each other's communication gaps</span>
@@ -430,8 +447,8 @@ export default function CompatibilityReportPage({ params }) {
                     </div>
                     
                     <div>
-                      <h4 className="text-sm font-medium mb-2">Recommendations</h4>
-                      <ul className="text-sm space-y-1">
+                      <h4 className="text-xs sm:text-sm font-medium mb-2">Recommendations</h4>
+                      <ul className="text-xs sm:text-sm space-y-1">
                         <li className="flex items-start gap-2">
                           <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5" />
                           <span>Recognize when directness might be received as harshness</span>
@@ -451,14 +468,16 @@ export default function CompatibilityReportPage({ params }) {
           <TabsContent value="values">
             <Card>
               <CardHeader>
-                <CardTitle>Values & Beliefs</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">Values & Beliefs</CardTitle>
                 <CardDescription>
                   Alignment in core values and belief systems
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-center">
-                  <p className="text-muted-foreground">Values & Beliefs analysis is available after completing the corresponding assessment.</p>
+                <div className="flex items-center justify-center min-h-[200px]">
+                  <p className="text-sm text-muted-foreground text-center px-4">
+                    Values & Beliefs analysis is available after completing the corresponding assessment.
+                  </p>
                 </div>
               </CardContent>
             </Card>

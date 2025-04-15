@@ -1,4 +1,3 @@
-// src/app/connections/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -8,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 // Mock data for connections
 const mockConnections = [
@@ -166,9 +166,10 @@ export default function ConnectionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("compatibility");
   const [filterThreshold, setFilterThreshold] = useState(0);
+  const [activeTab, setActiveTab] = useState("connections");
   
   // Filter and sort connections based on user input
-  const filterConnections = (connections) => {
+  const filterConnections = (connections: typeof mockConnections) => {
     return connections
       .filter(
         (connection) =>
@@ -193,17 +194,17 @@ export default function ConnectionsPage() {
 
   return (
     <AppLayout>
-      <div className="container py-10">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+      <div className="container py-6 sm:py-8 md:py-10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Connections</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Connections</h1>
+            <p className="text-sm md:text-base text-muted-foreground">
               Manage your connections and discover new compatibility matches
             </p>
           </div>
         </div>
         
-        <div className="mb-8 flex flex-col sm:flex-row gap-4">
+        <div className="mb-6 md:mb-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
           <div className="w-full sm:w-1/2 lg:w-2/3">
             <Label htmlFor="search" className="sr-only">
               Search connections
@@ -213,10 +214,10 @@ export default function ConnectionsPage() {
               placeholder="Search by name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full"
+              className="w-full text-xs sm:text-sm"
             />
           </div>
-          <div className="flex gap-4 w-full sm:w-1/2 lg:w-1/3">
+          <div className="flex gap-3 sm:gap-4 w-full sm:w-1/2 lg:w-1/3">
             <div className="w-1/2">
               <Label htmlFor="sort" className="sr-only">
                 Sort by
@@ -225,13 +226,13 @@ export default function ConnectionsPage() {
                 value={sortOrder}
                 onValueChange={setSortOrder}
               >
-                <SelectTrigger id="sort">
+                <SelectTrigger id="sort" className="text-xs sm:text-sm">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="compatibility">Highest Compatibility</SelectItem>
-                  <SelectItem value="name">Name (A-Z)</SelectItem>
-                  <SelectItem value="recent">Most Recent</SelectItem>
+                  <SelectItem value="compatibility" className="text-xs sm:text-sm">Highest Compatibility</SelectItem>
+                  <SelectItem value="name" className="text-xs sm:text-sm">Name (A-Z)</SelectItem>
+                  <SelectItem value="recent" className="text-xs sm:text-sm">Most Recent</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -243,39 +244,45 @@ export default function ConnectionsPage() {
                 value={filterThreshold.toString()}
                 onValueChange={(value) => setFilterThreshold(parseInt(value))}
               >
-                <SelectTrigger id="filter">
+                <SelectTrigger id="filter" className="text-xs sm:text-sm">
                   <SelectValue placeholder="Filter by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0">Show All</SelectItem>
-                  <SelectItem value="60">60%+ Compatibility</SelectItem>
-                  <SelectItem value="75">75%+ Compatibility</SelectItem>
-                  <SelectItem value="90">90%+ Compatibility</SelectItem>
+                  <SelectItem value="0" className="text-xs sm:text-sm">Show All</SelectItem>
+                  <SelectItem value="60" className="text-xs sm:text-sm">60%+ Compatibility</SelectItem>
+                  <SelectItem value="75" className="text-xs sm:text-sm">75%+ Compatibility</SelectItem>
+                  <SelectItem value="90" className="text-xs sm:text-sm">90%+ Compatibility</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
         </div>
         
-        <Tabs defaultValue="connections">
-          <TabsList className="mb-6">
-            <TabsTrigger value="connections">Your Connections</TabsTrigger>
-            <TabsTrigger value="suggestions">Suggested Matches</TabsTrigger>
-            <TabsTrigger value="pending">Pending Requests</TabsTrigger>
-          </TabsList>
+        <Tabs 
+          defaultValue="connections"
+          value={activeTab} 
+          onValueChange={setActiveTab}
+        >
+          <div className="overflow-x-auto">
+            <TabsList className="mb-6 w-full md:w-auto inline-flex">
+              <TabsTrigger value="connections" className="text-xs sm:text-sm">Your Connections</TabsTrigger>
+              <TabsTrigger value="suggestions" className="text-xs sm:text-sm">Suggested Matches</TabsTrigger>
+              <TabsTrigger value="pending" className="text-xs sm:text-sm">Pending Requests</TabsTrigger>
+            </TabsList>
+          </div>
           
           <TabsContent value="connections">
             {filteredConnections.length === 0 ? (
-              <div className="text-center py-10 border rounded-lg bg-muted/30">
-                <h3 className="text-lg font-medium">No connections found</h3>
-                <p className="text-muted-foreground mt-1">
+              <div className="text-center py-8 sm:py-10 border rounded-lg bg-muted/30">
+                <h3 className="text-base sm:text-lg font-medium">No connections found</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                   {searchQuery
                     ? "Try adjusting your search criteria."
                     : "You don't have any connections yet."}
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {filteredConnections.map((connection) => (
                   <CompatibilityCard
                     key={connection.id}
@@ -286,6 +293,7 @@ export default function ConnectionsPage() {
                     strengths={connection.strengths}
                     challenges={connection.challenges}
                     dimensions={connection.dimensions}
+                    className="h-full"
                   />
                 ))}
               </div>
@@ -294,16 +302,16 @@ export default function ConnectionsPage() {
           
           <TabsContent value="suggestions">
             {filteredSuggestions.length === 0 ? (
-              <div className="text-center py-10 border rounded-lg bg-muted/30">
-                <h3 className="text-lg font-medium">No suggestions found</h3>
-                <p className="text-muted-foreground mt-1">
+              <div className="text-center py-8 sm:py-10 border rounded-lg bg-muted/30">
+                <h3 className="text-base sm:text-lg font-medium">No suggestions found</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                   {searchQuery || filterThreshold > 0
                     ? "Try adjusting your search or filter criteria."
                     : "Complete more assessments to get personalized suggestions."}
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {filteredSuggestions.map((suggestion) => (
                   <CompatibilityCard
                     key={suggestion.id}
@@ -315,6 +323,7 @@ export default function ConnectionsPage() {
                     challenges={suggestion.challenges}
                     dimensions={suggestion.dimensions}
                     actionText="Connect"
+                    className="h-full"
                   />
                 ))}
               </div>
@@ -323,39 +332,39 @@ export default function ConnectionsPage() {
           
           <TabsContent value="pending">
             {mockPendingRequests.length === 0 ? (
-              <div className="text-center py-10 border rounded-lg bg-muted/30">
-                <h3 className="text-lg font-medium">No pending requests</h3>
-                <p className="text-muted-foreground mt-1">
+              <div className="text-center py-8 sm:py-10 border rounded-lg bg-muted/30">
+                <h3 className="text-base sm:text-lg font-medium">No pending requests</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                   You don't have any pending connection requests.
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {mockPendingRequests.map((request) => (
-                  <div key={request.id} className="border rounded-lg overflow-hidden">
-                    <div className="p-6 flex items-center">
-                      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mr-4">
+                  <div key={request.id} className="border rounded-lg overflow-hidden h-full">
+                    <div className="p-4 sm:p-6 flex items-center">
+                      <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-muted flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                         <span className="text-xs font-medium">
                           {request.name.split(' ')[0][0]}{request.name.split(' ')[1][0]}
                         </span>
                       </div>
                       <div>
-                        <h3 className="font-medium">{request.name}</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="font-medium text-sm sm:text-base">{request.name}</h3>
+                        <p className="text-xs text-muted-foreground">
                           Compatibility: {request.score}%
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">
                           Requested {new Date(request.requestedAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
-                    <div className="border-t p-4 flex gap-3">
-                      <button className="w-1/2 py-2 px-4 rounded-md bg-primary text-white hover:bg-primary/90 font-medium text-sm">
+                    <div className="border-t p-3 sm:p-4 flex gap-2 sm:gap-3">
+                      <Button className="w-1/2 text-xs sm:text-sm py-1 sm:py-2 h-auto">
                         Accept
-                      </button>
-                      <button className="w-1/2 py-2 px-4 rounded-md border hover:bg-muted/50 font-medium text-sm">
+                      </Button>
+                      <Button variant="outline" className="w-1/2 text-xs sm:text-sm py-1 sm:py-2 h-auto">
                         Decline
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ))}
