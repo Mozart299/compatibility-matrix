@@ -15,10 +15,12 @@ import {
   MessagesSquare, 
   UserCircle2 
 } from "lucide-react";
+import { CompatibilityPageProps } from "@/types/compatibility";
 
-
-interface CompatibilityReportPageParams {
-  id: string;
+interface PageProps {
+  params: {
+    id: string;
+  };
 }
 
 // Mock compatibility data for a specific person
@@ -100,8 +102,8 @@ const getCompatibilityLevel = (score: number) => {
 };
 
 
-export default function CompatibilityReportPage({ params }: { params: CompatibilityReportPageParams }) {
-  const { id } = params;
+export default function CompatibilityReportPage() {
+  //const { id } = params;
   const { level, description } = getCompatibilityLevel(mockCompatibilityData.overallScore);
   const [activeTab, setActiveTab] = useState("personality");
   

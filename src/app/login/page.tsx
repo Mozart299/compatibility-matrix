@@ -18,15 +18,23 @@ export default function LoginPage() {
     rememberMe: false,
   });
   
-  const handleChange = (e) => {
+  interface FormData {
+    email: string;
+    password: string;
+    rememberMe: boolean;
+  }
+
+  interface HandleChangeEvent extends React.ChangeEvent<HTMLInputElement> {}
+
+  const handleChange = (e: HandleChangeEvent) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
+    setFormData((prev: FormData) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
   };
   
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     // In a real app, you would handle authentication here
     console.log("Login data:", formData);

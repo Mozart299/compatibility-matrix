@@ -22,26 +22,43 @@ export default function SignupPage() {
     receiveUpdates: false,
   });
   
-  const handleChange = (e) => {
+  interface FormData {
+    name: string;
+    email: string;
+    password: string;
+    agreeTerms: boolean;
+    receiveUpdates: boolean;
+  }
+
+  interface ChangeEvent {
+    target: {
+      name: string;
+      value: string;
+      type: string;
+      checked: boolean;
+    };
+  }
+
+  const handleChange = (e: ChangeEvent) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
+    setFormData((prev: FormData) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
   };
   
-  const handleCheckboxChange = (name, checked) => {
-    setFormData((prev) => ({
+  const handleCheckboxChange = (name: keyof FormData, checked: boolean) => {
+    setFormData((prev: FormData) => ({
       ...prev,
       [name]: checked,
     }));
-  };
+    };
   
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     // In a real app, you would handle signup here
     console.log("Signup data:", formData);
-  };
+    };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
@@ -137,7 +154,7 @@ export default function SignupPage() {
                   <Checkbox 
                     id="terms" 
                     checked={formData.agreeTerms}
-                    onCheckedChange={(checked) => handleCheckboxChange("agreeTerms", checked)}
+                    onCheckedChange={(checked: boolean) => handleCheckboxChange("agreeTerms", checked)}
                   />
                   <div className="grid gap-1.5 leading-none">
                     <Label
@@ -160,7 +177,7 @@ export default function SignupPage() {
                   <Checkbox 
                     id="updates" 
                     checked={formData.receiveUpdates}
-                    onCheckedChange={(checked) => handleCheckboxChange("receiveUpdates", checked)}
+                    onCheckedChange={(checked: boolean) => handleCheckboxChange("receiveUpdates", checked)}
                   />
                   <div className="grid gap-1.5 leading-none">
                     <Label
