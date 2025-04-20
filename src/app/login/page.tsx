@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ export default function LoginPage() {
 
   const { login, error, clearError } = useAuth();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const registered = searchParams.get('registered');
   const from = searchParams.get('from');
 
@@ -48,8 +49,8 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(formData.email, formData.password);
-      // Successful login will redirect in the auth context
+      await login(formData.email, formData.password, formData.rememberMe);
+      router.push(from || "/dashboard");
     } catch (err) {
       // Error is handled in auth context
       setIsLoading(false);
