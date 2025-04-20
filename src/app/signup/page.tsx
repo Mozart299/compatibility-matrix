@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState } from "react";
@@ -11,9 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -21,7 +22,9 @@ export default function SignupPage() {
     agreeTerms: false,
     receiveUpdates: false,
   });
-  
+
+  const { register, error, clearError } = useAuth();
+
   interface FormData {
     name: string;
     email: string;
@@ -41,24 +44,39 @@ export default function SignupPage() {
 
   const handleChange = (e: ChangeEvent) => {
     const { name, value, type, checked } = e.target;
+    clearError();
     setFormData((prev: FormData) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
   };
-  
+
   const handleCheckboxChange = (name: keyof FormData, checked: boolean) => {
+    clearError();
     setFormData((prev: FormData) => ({
       ...prev,
       [name]: checked,
     }));
-    };
-  
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // In a real app, you would handle signup here
-    console.log("Signup data:", formData);
-    };
+    setIsLoading(true);
+
+    try {
+      await register(formData.email, formData.password, formData.name);
+      // Successful registration will redirect in the auth context
+    } catch (err) {
+      // Error is handled in auth context
+      setIsLoading(false);
+    }
+  };
+
+  // Password strength validation
+  const hasMinLength = formData.password.length >= 8;
+  const hasLetter = /[a-zA-Z]/.test(formData.password);
+  const hasNumber = /\d/.test(formData.password);
+  const isPasswordValid = hasMinLength && hasLetter && hasNumber;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
@@ -84,7 +102,7 @@ export default function SignupPage() {
           <h1 className="text-3xl font-bold">Compatibility Matrix</h1>
           <p className="text-muted-foreground mt-1">Create a new account</p>
         </div>
-        
+
         <Card>
           <form onSubmit={handleSubmit}>
             <CardHeader>
@@ -94,6 +112,12 @@ export default function SignupPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <Input
@@ -104,9 +128,10 @@ export default function SignupPage() {
                   required
                   value={formData.name}
                   onChange={handleChange}
+                  disabled={isLoading}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -117,9 +142,10 @@ export default function SignupPage() {
                   required
                   value={formData.email}
                   onChange={handleChange}
+                  disabled={isLoading}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
@@ -130,6 +156,7 @@ export default function SignupPage() {
                     required
                     value={formData.password}
                     onChange={handleChange}
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
@@ -143,18 +170,30 @@ export default function SignupPage() {
                     )}
                   </button>
                 </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Password must be at least 8 characters long and include a mix of letters, 
-                  numbers, and special characters.
-                </p>
+                <div className="mt-2 space-y-1">
+                  <p className="text-sm text-muted-foreground">Password must have:</p>
+                  <div className="text-xs flex items-center">
+                    <div className={`w-4 h-4 rounded-full mr-2 ${hasMinLength ? "bg-green-500" : "bg-gray-300"}`}></div>
+                    <span>At least 8 characters</span>
+                  </div>
+                  <div className="text-xs flex items-center">
+                    <div className={`w-4 h-4 rounded-full mr-2 ${hasLetter ? "bg-green-500" : "bg-gray-300"}`}></div>
+                    <span>At least one letter</span>
+                  </div>
+                  <div className="text-xs flex items-center">
+                    <div className={`w-4 h-4 rounded-full mr-2 ${hasNumber ? "bg-green-500" : "bg-gray-300"}`}></div>
+                    <span>At least one number</span>
+                  </div>
+                </div>
               </div>
-              
+
               <div className="space-y-3 pt-2">
                 <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="terms" 
+                  <Checkbox
+                    id="terms"
                     checked={formData.agreeTerms}
                     onCheckedChange={(checked: boolean) => handleCheckboxChange("agreeTerms", checked)}
+                    disabled={isLoading}
                   />
                   <div className="grid gap-1.5 leading-none">
                     <Label
@@ -172,10 +211,10 @@ export default function SignupPage() {
                     </Label>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="updates" 
+                  <Checkbox
+                    id="updates"
                     checked={formData.receiveUpdates}
                     onCheckedChange={(checked: boolean) => handleCheckboxChange("receiveUpdates", checked)}
                   />
@@ -191,14 +230,31 @@ export default function SignupPage() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full"
-                disabled={!formData.agreeTerms}
+                disabled={!formData.agreeTerms || isLoading}
               >
-                Create account
+                {isLoading ? (
+                  <>
+                    Creating account...
+                    <svg
+                      className="ml-2 h-4 w-4 animate-spin"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </>
+                ) : (
+                  "Create account"
+                )}
               </Button>
-              
+
               <div className="relative w-full">
                 <Separator className="my-4" />
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -207,7 +263,7 @@ export default function SignupPage() {
                   </span>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4 w-full">
                 <Button variant="outline" type="button" className="w-full">
                   <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -222,7 +278,7 @@ export default function SignupPage() {
                   Facebook
                 </Button>
               </div>
-              
+
               <div className="text-center text-sm">
                 Already have an account?{" "}
                 <Link href="/login" className="text-primary hover:underline">
