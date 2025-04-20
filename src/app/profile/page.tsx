@@ -15,6 +15,7 @@ import { AlertCircle, CheckCircle, Edit, Save, Upload, User } from "lucide-react
 import { useAuth } from "@/contexts/auth-context";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
+import { axiosInstance } from "@/lib/auth-service";
 
 // Profile data interface matching Supabase 'profiles' table
 interface ProfileData {
@@ -75,23 +76,21 @@ export default function ProfilePage() {
   const fetchProfileData = async () => {
     setLoading(true);
     setError(null);
+
+    
     
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
       // Make API call to fetch user profile
-      const response = await fetch(`${API_BASE_URL}/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        }
-      });
+      const response = await axiosInstance.get('/users/me');
 
       console.log("API Response:", response);
       
-      if (!response.ok) {
+      if (response.status < 200 || response.status >= 300) {
         throw new Error('Failed to load profile data');
       }
       
-      const profileData = await response.json();
+      const profileData = response.data;
       
       // Transform backend data to fit component's needs
       setProfile({
@@ -122,17 +121,13 @@ export default function ProfilePage() {
   const fetchAssessmentStatus = async () => {
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-      const response = await fetch(`${API_BASE_URL}/assessments`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        }
-      });
+      const response = await axiosInstance.get('/assessments');
       
-      if (!response.ok) {
+      if (response.status < 200 || response.status >= 300) {
         throw new Error('Failed to load assessment data');
       }
       
-      const data = await response.json();
+      const data = response.data;
       
       // Transform assessment data for our component
       const assessmentData = data.assessments.map((assessment: any) => ({
@@ -210,16 +205,9 @@ export default function ProfilePage() {
       };
       
       // Make API call to update profile
-      const response = await fetch(`${API_BASE_URL}/users/me`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
-        body: JSON.stringify(updateData)
-      });
+      const response = await axiosInstance.put('/users/me', updateData);
       
-      if (!response.ok) {
+      if (response.status < 200 || response.status >= 300) {
         throw new Error('Failed to update profile');
       }
       
