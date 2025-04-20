@@ -51,6 +51,9 @@ axiosInstance.interceptors.response.use(
         const newTokens = { accessToken: access_token, refreshToken: refresh_token };
         storage.setItem("authTokens", JSON.stringify(newTokens));
 
+        // Set the new access token as a cookie
+        document.cookie = `accessToken=${access_token}; path=/; secure; samesite=strict`;
+
         // Retry the original request with new token
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return axiosInstance(originalRequest);
@@ -58,6 +61,7 @@ axiosInstance.interceptors.response.use(
         // If refresh fails, clear tokens and redirect to login
         localStorage.removeItem("authTokens");
         sessionStorage.removeItem("authTokens");
+        document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict";
         window.location.href = "/login";
         return Promise.reject(refreshError);
       }
@@ -114,6 +118,11 @@ const AuthService = {
       };
       storage.setItem("authTokens", JSON.stringify(authTokens));
 
+      // Set the access token as a cookie
+      // Use secure and samesite flags for security
+      // You can adjust the expiration time as needed
+      document.cookie = `accessToken=${response.data.access_token}; path=/; secure; samesite=strict`;
+
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;
@@ -134,6 +143,9 @@ const AuthService = {
       // Remove tokens from storage
       localStorage.removeItem("authTokens");
       sessionStorage.removeItem("authTokens");
+      
+      // Clear the accessToken cookie by setting expiration in the past
+      document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict";
     }
   },
 
