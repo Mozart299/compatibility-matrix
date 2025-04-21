@@ -1,4 +1,5 @@
-import { useState } from "react";
+// src/components/assessment/QuestionContainer.tsx (updated)
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -26,6 +27,8 @@ export function QuestionContainer({
 }: QuestionContainerProps) {
   const [currentResponse, setCurrentResponse] = useState<string | null>(null);
   const [responseSubmitting, setResponseSubmitting] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
+  const [isResponseValid, setIsResponseValid] = useState(false);
   
   const currentQuestion = activeAssessment.next_question;
   
@@ -35,10 +38,27 @@ export function QuestionContainer({
   
   const handleResponseChange = (value: string) => {
     setCurrentResponse(value);
+    setShowValidation(false);
+  };
+  
+  const handleValidChange = (isValid: boolean) => {
+    setIsResponseValid(isValid);
   };
   
   const handleNextQuestion = async () => {
-    if (!currentResponse || !activeAssessment || !currentQuestion) return;
+    // Show validation if not already showing
+    if (!showValidation) {
+      setShowValidation(true);
+      
+      // If the response isn't valid, don't proceed
+      if (!isResponseValid) {
+        return;
+      }
+    }
+    
+    if (!currentResponse || !activeAssessment || !currentQuestion || !isResponseValid) {
+      return;
+    }
     
     try {
       setResponseSubmitting(true);
@@ -50,6 +70,7 @@ export function QuestionContainer({
       );
       
       setCurrentResponse(null);
+      setShowValidation(false);
       setResponseSubmitting(false);
     } catch (err) {
       setResponseSubmitting(false);
@@ -82,7 +103,9 @@ export function QuestionContainer({
           question={currentQuestion}
           value={currentResponse}
           onChange={handleResponseChange}
+          onValidChange={handleValidChange}
           disabled={responseSubmitting}
+          showValidation={showValidation}
         />
       </CardContent>
       <CardFooter className="p-4 sm:p-6 flex justify-between">
@@ -97,7 +120,7 @@ export function QuestionContainer({
         <Button
           size="sm"
           onClick={handleNextQuestion}
-          disabled={!currentResponse || responseSubmitting}
+          disabled={responseSubmitting}
         >
           {responseSubmitting ? (
             <>

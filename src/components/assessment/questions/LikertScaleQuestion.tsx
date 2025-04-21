@@ -1,6 +1,7 @@
-// src/components/assessment/questions/LikertScaleQuestion.tsx
+// src/components/assessment/questions/LikertScaleQuestion.tsx (updated)
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { FormMessage } from "@/components/ui/form";
 
 interface LikertScaleQuestionProps {
   question: {
@@ -14,6 +15,8 @@ interface LikertScaleQuestionProps {
   value: string | null;
   onChange: (value: string) => void;
   disabled?: boolean;
+  error?: string | null;
+  showValidation?: boolean;
 }
 
 export function LikertScaleQuestion({
@@ -21,7 +24,9 @@ export function LikertScaleQuestion({
   options,
   value,
   onChange,
-  disabled = false
+  disabled = false,
+  error = null,
+  showValidation = false
 }: LikertScaleQuestionProps) {
   return (
     <div className="space-y-4">
@@ -29,7 +34,7 @@ export function LikertScaleQuestion({
         {question.text}
       </h3>
       
-      <div className="pt-2">
+      <div className="space-y-2">
         <RadioGroup
           value={value ?? undefined}
           onValueChange={onChange}
@@ -60,6 +65,11 @@ export function LikertScaleQuestion({
           <span>{options[0]?.label}</span>
           <span>{options[options.length - 1]?.label}</span>
         </div>
+        
+        {/* Validation error message */}
+        {(showValidation && error) && (
+          <FormMessage>{error}</FormMessage>
+        )}
       </div>
     </div>
   );

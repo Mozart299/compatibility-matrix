@@ -1,7 +1,9 @@
-// src/components/assessment/questions/QuestionFactory.tsx
+// src/components/assessment/questions/QuestionFactory.tsx (updated)
 import { MultipleChoiceQuestion } from './MultipleChoiceQuestion';
 import { LikertScaleQuestion } from './LikertScaleQuestion';
 import { OpenEndedQuestion } from './OpenEndedQuestion';
+import { useState, useEffect } from 'react';
+import { validateResponse } from '@/utils/validation';
 
 interface QuestionFactoryProps {
   question: {
@@ -12,48 +14,76 @@ interface QuestionFactoryProps {
   };
   value: string | null;
   onChange: (value: string) => void;
+  onValidChange?: (isValid: boolean) => void;
   disabled?: boolean;
+  showValidation?: boolean;
 }
 
-export function QuestionFactory({ question, value, onChange, disabled = false }: QuestionFactoryProps) {
+export function QuestionFactory({ 
+  question, 
+  value, 
+  onChange, 
+  onValidChange,
+  disabled = false,
+  showValidation = false
+}: QuestionFactoryProps) {
+  const [error, setError] = useState<string | null>(null);
+  
   // Parse options if they're a string
   const parsedOptions = typeof question.options === 'string'
     ? JSON.parse(question.options)
     : question.options;
   
   // Determine question type
-  // This can be extended based on your backend's question type definitions
   const questionType = question.type || detectQuestionType(parsedOptions);
+  
+  // Validate response when value changes or when showValidation is true
+  useEffect(() => {
+    if (value !== null || showValidation) {
+      const { isValid, errorMessage } = validateResponse(
+        value, 
+        questionType as any, 
+        parsedOptions
+      );
+      
+      setError(isValid ? null : errorMessage || 'Invalid response');
+      
+      if (onValidChange) {
+        onValidChange(isValid);
+      }
+    }
+  }, [value, questionType, parsedOptions, showValidation, onValidChange]);
+  
+  // Common props for all question types
+  const commonProps = {
+    question,
+    value,
+    onChange,
+    disabled,
+    error,
+    showValidation
+  };
   
   switch (questionType) {
     case 'likert_scale':
       return (
         <LikertScaleQuestion
-          question={question}
+          {...commonProps}
           options={parsedOptions}
-          value={value}
-          onChange={onChange}
-          disabled={disabled}
         />
       );
     case 'open_ended':
       return (
         <OpenEndedQuestion
-          question={question}
-          value={value}
-          onChange={onChange}
-          disabled={disabled}
+          {...commonProps}
         />
       );
     case 'multiple_choice':
     default:
       return (
         <MultipleChoiceQuestion
-          question={question}
+          {...commonProps}
           options={parsedOptions}
-          value={value}
-          onChange={onChange}
-          disabled={disabled}
         />
       );
   }
