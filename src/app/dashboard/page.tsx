@@ -1,8 +1,9 @@
-
+'use client';
 import { AppLayout } from "@/components/layouts/AppLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ResumeAssessmentCard } from "@/components/dashboard/ResumeAssessmentCard";
 import Link from "next/link";
 
 // Mock data for the dashboard
@@ -46,6 +47,7 @@ export default function Dashboard() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <ResumeAssessmentCard />
           {/* Overall Compatibility Card */}
           <Card>
             <CardHeader className="pb-3">
@@ -216,7 +218,7 @@ export default function Dashboard() {
                     </Button>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-4 p-4 rounded-lg border bg-muted/30">
                   <div className="h-10 w-10 flex-shrink-0 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -233,7 +235,7 @@ export default function Dashboard() {
                     </Button>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-4 p-4 rounded-lg border bg-muted/30">
                   <div className="h-10 w-10 flex-shrink-0 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
