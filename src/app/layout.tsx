@@ -1,9 +1,11 @@
+// src/app/layout.tsx
 import { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Providers } from "./providers";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +39,7 @@ export default function RootLayout({
         <AuthProvider>
           <Providers>
             {children}
+            <Toaster />
           </Providers>
         </AuthProvider>
       </body>
