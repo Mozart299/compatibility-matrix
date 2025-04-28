@@ -8,160 +8,20 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useConnections, useSuggestedConnections, useSendConnectionRequest, useRespondToConnectionRequest } from "@/hooks/useConnections";
+import { useConnections, useSuggestedConnections, useRespondToConnectionRequest } from "@/hooks/useConnections";
 
-// Mock data for connections
-const mockConnections = [
-  {
-    id: 1,
-    name: "Alex Johnson",
-    avatar: "/avatars/alex.png",
-    score: 92,
-    strengths: ["Shared values around honesty and personal growth"],
-    challenges: ["Different communication styles"],
-    dimensions: [
-      { name: "Values", score: 91 },
-      { name: "Personality", score: 82 },
-      { name: "Emotional Intelligence", score: 94 },
-    ],
-  },
-  {
-    id: 2,
-    name: "Jamie Smith",
-    avatar: "/avatars/jamie.png",
-    score: 88,
-    strengths: ["Complementary personality traits"],
-    challenges: ["Differing views on work-life balance"],
-    dimensions: [
-      { name: "Personality", score: 89 },
-      { name: "Communication", score: 85 },
-      { name: "Interests", score: 78 },
-    ],
-  },
-  {
-    id: 3,
-    name: "Taylor West",
-    avatar: "/avatars/taylor.png",
-    score: 85,
-    strengths: ["Shared interests in outdoor activities"],
-    challenges: ["Different approaches to planning"],
-    dimensions: [
-      { name: "Interests", score: 93 },
-      { name: "Values", score: 79 },
-      { name: "Lifestyle", score: 76 },
-    ],
-  },
-  {
-    id: 4,
-    name: "Morgan Reed",
-    avatar: "/avatars/morgan.png",
-    score: 80,
-    strengths: ["Similar communication styles"],
-    challenges: ["Different long-term goals"],
-    dimensions: [
-      { name: "Communication", score: 92 },
-      { name: "Personality", score: 81 },
-      { name: "Goals", score: 65 },
-    ],
-  },
-  {
-    id: 5,
-    name: "Casey Kim",
-    avatar: "/avatars/casey.png",
-    score: 76,
-    strengths: ["Shared professional interests"],
-    challenges: ["Different social preferences"],
-    dimensions: [
-      { name: "Interests", score: 85 },
-      { name: "Communication", score: 73 },
-      { name: "Lifestyle", score: 71 },
-    ],
-  },
-  {
-    id: 6,
-    name: "Jordan Lee",
-    avatar: "/avatars/jordan.png",
-    score: 74,
-    strengths: ["Complementary problem-solving approaches"],
-    challenges: ["Different energy levels"],
-    dimensions: [
-      { name: "Personality", score: 79 },
-      { name: "Communication", score: 73 },
-      { name: "Values", score: 72 },
-    ],
-  },
-];
-
-// Mock suggested connections
-const mockSuggestions = [
-  {
-    id: 7,
-    name: "Riley Parker",
-    avatar: "/avatars/riley.png",
-    score: 89,
-    strengths: ["Similar values and goals"],
-    challenges: ["Different communication preferences"],
-    dimensions: [
-      { name: "Values", score: 93 },
-      { name: "Goals", score: 87 },
-      { name: "Communication", score: 68 },
-    ],
-  },
-  {
-    id: 8,
-    name: "Avery Thompson",
-    avatar: "/avatars/avery.png",
-    score: 85,
-    strengths: ["Shared intellectual interests"],
-    challenges: ["Different social energy levels"],
-    dimensions: [
-      { name: "Interests", score: 92 },
-      { name: "Personality", score: 84 },
-      { name: "Lifestyle", score: 71 },
-    ],
-  },
-  {
-    id: 9,
-    name: "Quinn Wilson",
-    avatar: "/avatars/quinn.png",
-    score: 83,
-    strengths: ["Compatible work styles"],
-    challenges: ["Different preferences for routine"],
-    dimensions: [
-      { name: "Communication", score: 86 },
-      { name: "Goals", score: 81 },
-      { name: "Lifestyle", score: 69 },
-    ],
-  },
-];
-
-// Mock pending connection requests
-const mockPendingRequests = [
-  {
-    id: 10,
-    name: "Blake Anderson",
-    avatar: "/avatars/blake.png",
-    score: 81,
-    dimensions: [
-      { name: "Values", score: 85 },
-      { name: "Personality", score: 79 },
-      { name: "Interests", score: 77 },
-    ],
-    requestedAt: "2025-04-10T14:30:00Z",
-  },
-  {
-    id: 11,
-    name: "Reese Garcia",
-    avatar: "/avatars/reese.png",
-    score: 78,
-    dimensions: [
-      { name: "Communication", score: 82 },
-      { name: "Goals", score: 76 },
-      { name: "Values", score: 75 },
-    ],
-    requestedAt: "2025-04-12T09:15:00Z",
-  },
-];
+interface Connection {
+  id: string;
+  userId: string;
+  name: string;
+  avatar: string;
+  score: number;
+  strengths: string[];
+  challenges: string[];
+  dimensions: { name: string; score: number }[];
+  status: string;
+  requestedAt?: string;
+}
 
 export default function ConnectionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -169,19 +29,25 @@ export default function ConnectionsPage() {
   const [filterThreshold, setFilterThreshold] = useState(0);
   const [activeTab, setActiveTab] = useState("connections");
 
+  // Fetch connections (accepted), pending requests, and suggested connections
   const { data: connections = [], isLoading: connectionsLoading } = useConnections("accepted");
   const { data: pendingRequests = [], isLoading: pendingLoading } = useConnections("pending");
   const { data: suggestions = [], isLoading: suggestionsLoading } = useSuggestedConnections(undefined, filterThreshold);
-  const sendConnectionRequest = useSendConnectionRequest();
+
+  console.log("Connections:", connections);
+  console.log("Pending Requests:", pendingRequests);
+  console.log("Suggestions:", suggestions);
+
+  // Mutation for responding to connection requests
   const respondToConnectionRequest = useRespondToConnectionRequest();
-  
+
   // Filter and sort connections based on user input
-  const filterConnections = (connections: typeof mockConnections) => {
-    return connections
+  const filterConnections = (items: Connection[]) => {
+    return items
       .filter(
-        (connection) =>
-          connection.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-          connection.score >= filterThreshold
+        (item) =>
+          item.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+          item.score >= filterThreshold
       )
       .sort((a, b) => {
         if (sortOrder === "compatibility") {
@@ -189,15 +55,22 @@ export default function ConnectionsPage() {
         } else if (sortOrder === "name") {
           return a.name.localeCompare(b.name);
         } else if (sortOrder === "recent") {
-          // In a real app, would sort by most recent interaction
-          return 0;
+          // Sort by requestedAt for pending requests, fallback to score
+          if (a.requestedAt && b.requestedAt) {
+            return new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime();
+          }
+          return b.score - a.score;
         }
         return 0;
       });
   };
-  
-  const filteredConnections = filterConnections(mockConnections);
-  const filteredSuggestions = filterConnections(mockSuggestions);
+
+  const filteredConnections = filterConnections(connections);
+  const filteredSuggestions = filterConnections(suggestions);
+  const filteredPendingRequests = filterConnections(pendingRequests);
+
+  // Handle loading state
+  const isLoading = connectionsLoading || pendingLoading || suggestionsLoading;
 
   return (
     <AppLayout>
@@ -210,7 +83,7 @@ export default function ConnectionsPage() {
             </p>
           </div>
         </div>
-        
+
         <div className="mb-6 md:mb-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
           <div className="w-full sm:w-1/2 lg:w-2/3">
             <Label htmlFor="search" className="sr-only">
@@ -229,17 +102,20 @@ export default function ConnectionsPage() {
               <Label htmlFor="sort" className="sr-only">
                 Sort by
               </Label>
-              <Select
-                value={sortOrder}
-                onValueChange={setSortOrder}
-              >
+              <Select value={sortOrder} onValueChange={setSortOrder}>
                 <SelectTrigger id="sort" className="text-xs sm:text-sm">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="compatibility" className="text-xs sm:text-sm">Highest Compatibility</SelectItem>
-                  <SelectItem value="name" className="text-xs sm:text-sm">Name (A-Z)</SelectItem>
-                  <SelectItem value="recent" className="text-xs sm:text-sm">Most Recent</SelectItem>
+                  <SelectItem value="compatibility" className="text-xs sm:text-sm">
+                    Highest Compatibility
+                  </SelectItem>
+                  <SelectItem value="name" className="text-xs sm:text-sm">
+                    Name (A-Z)
+                  </SelectItem>
+                  <SelectItem value="recent" className="text-xs sm:text-sm">
+                    Most Recent
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -255,31 +131,45 @@ export default function ConnectionsPage() {
                   <SelectValue placeholder="Filter by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0" className="text-xs sm:text-sm">Show All</SelectItem>
-                  <SelectItem value="60" className="text-xs sm:text-sm">60%+ Compatibility</SelectItem>
-                  <SelectItem value="75" className="text-xs sm:text-sm">75%+ Compatibility</SelectItem>
-                  <SelectItem value="90" className="text-xs sm:text-sm">90%+ Compatibility</SelectItem>
+                  <SelectItem value="0" className="text-xs sm:text-sm">
+                    Show All
+                  </SelectItem>
+                  <SelectItem value="60" className="text-xs sm:text-sm">
+                    60%+ Compatibility
+                  </SelectItem>
+                  <SelectItem value="75" className="text-xs sm:text-sm">
+                    75%+ Compatibility
+                  </SelectItem>
+                  <SelectItem value="90" className="text-xs sm:text-sm">
+                    90%+ Compatibility
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
         </div>
-        
-        <Tabs 
-          defaultValue="connections"
-          value={activeTab} 
-          onValueChange={setActiveTab}
-        >
+
+        <Tabs defaultValue="connections" value={activeTab} onValueChange={setActiveTab}>
           <div className="overflow-x-auto">
             <TabsList className="mb-6 w-full md:w-auto inline-flex">
-              <TabsTrigger value="connections" className="text-xs sm:text-sm">Your Connections</TabsTrigger>
-              <TabsTrigger value="suggestions" className="text-xs sm:text-sm">Suggested Matches</TabsTrigger>
-              <TabsTrigger value="pending" className="text-xs sm:text-sm">Pending Requests</TabsTrigger>
+              <TabsTrigger value="connections" className="text-xs sm:text-sm">
+                Your Connections
+              </TabsTrigger>
+              <TabsTrigger value="suggestions" className="text-xs sm:text-sm">
+                Suggested Matches
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="text-xs sm:text-sm">
+                Pending Requests
+              </TabsTrigger>
             </TabsList>
           </div>
-          
+
           <TabsContent value="connections">
-            {filteredConnections.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-8 sm:py-10 border rounded-lg bg-muted/30">
+                <h3 className="text-base sm:text-lg font-medium">Loading...</h3>
+              </div>
+            ) : filteredConnections.length === 0 ? (
               <div className="text-center py-8 sm:py-10 border rounded-lg bg-muted/30">
                 <h3 className="text-base sm:text-lg font-medium">No connections found</h3>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">
@@ -293,22 +183,27 @@ export default function ConnectionsPage() {
                 {filteredConnections.map((connection) => (
                   <CompatibilityCard
                     key={connection.id}
-                    userId={connection.id}
+                    userId={connection.userId}
                     name={connection.name}
                     avatar={connection.avatar}
                     score={connection.score}
                     strengths={connection.strengths}
                     challenges={connection.challenges}
                     dimensions={connection.dimensions}
+                    actionText="View Details"
                     className="h-full"
                   />
                 ))}
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="suggestions">
-            {filteredSuggestions.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-8 sm:py-10 border rounded-lg bg-muted/30">
+                <h3 className="text-base sm:text-lg font-medium">Loading...</h3>
+              </div>
+            ) : filteredSuggestions.length === 0 ? (
               <div className="text-center py-8 sm:py-10 border rounded-lg bg-muted/30">
                 <h3 className="text-base sm:text-lg font-medium">No suggestions found</h3>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">
@@ -321,8 +216,8 @@ export default function ConnectionsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {filteredSuggestions.map((suggestion) => (
                   <CompatibilityCard
-                    key={suggestion.id}
-                    userId={suggestion.id}
+                    key={suggestion.userId}
+                    userId={suggestion.userId}
                     name={suggestion.name}
                     avatar={suggestion.avatar}
                     score={suggestion.score}
@@ -336,9 +231,13 @@ export default function ConnectionsPage() {
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="pending">
-            {mockPendingRequests.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-8 sm:py-10 border rounded-lg bg-muted/30">
+                <h3 className="text-base sm:text-lg font-medium">Loading...</h3>
+              </div>
+            ) : filteredPendingRequests.length === 0 ? (
               <div className="text-center py-8 sm:py-10 border rounded-lg bg-muted/30">
                 <h3 className="text-base sm:text-lg font-medium">No pending requests</h3>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">
@@ -347,12 +246,13 @@ export default function ConnectionsPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {mockPendingRequests.map((request) => (
+                {filteredPendingRequests.map((request) => (
                   <div key={request.id} className="border rounded-lg overflow-hidden h-full">
                     <div className="p-4 sm:p-6 flex items-center">
                       <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-muted flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                         <span className="text-xs font-medium">
-                          {request.name.split(' ')[0][0]}{request.name.split(' ')[1][0]}
+                          {request.name.split(" ")[0][0]}
+                          {request.name.split(" ")[1]?.[0] || ""}
                         </span>
                       </div>
                       <div>
@@ -361,15 +261,35 @@ export default function ConnectionsPage() {
                           Compatibility: {request.score}%
                         </p>
                         <p className="text-[10px] sm:text-xs text-muted-foreground">
-                          Requested {new Date(request.requestedAt).toLocaleDateString()}
+                          Requested{" "}
+                          {request.requestedAt
+                            ? new Date(request.requestedAt).toLocaleDateString()
+                            : "Unknown"}
                         </p>
                       </div>
                     </div>
                     <div className="border-t p-3 sm:p-4 flex gap-2 sm:gap-3">
-                      <Button className="w-1/2 text-xs sm:text-sm py-1 sm:py-2 h-auto">
+                      <Button
+                        className="w-1/2 text-xs sm:text-sm py-1 sm:py-2 h-auto"
+                        onClick={() =>
+                          respondToConnectionRequest.mutate(
+                            { connectionId: request.id, action: "accept" },
+                            { onError: () => alert("Failed to accept request") }
+                          )
+                        }
+                      >
                         Accept
                       </Button>
-                      <Button variant="outline" className="w-1/2 text-xs sm:text-sm py-1 sm:py-2 h-auto">
+                      <Button
+                        variant="outline"
+                        className="w-1/2 text-xs sm:text-sm py-1 sm:py-2 h-auto"
+                        onClick={() =>
+                          respondToConnectionRequest.mutate(
+                            { connectionId: request.id, action: "decline" },
+                            { onError: () => alert("Failed to decline request") }
+                          )
+                        }
+                      >
                         Decline
                       </Button>
                     </div>
