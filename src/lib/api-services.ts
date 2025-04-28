@@ -130,3 +130,78 @@ export const CompatibilityService = {
     }
   }
 };
+
+// Connections API Services
+export const ConnectionsService = {
+  // Get all connections for the user
+  getConnections: async (status?: string) => {
+    try {
+      let url = '/connections';
+      if (status) {
+        url += `?status=${status}`;
+      }
+      const response = await axiosInstance.get(url);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching connections:', error);
+      throw error;
+    }
+  },
+  
+  // Send a connection request
+  sendConnectionRequest: async (userId: string) => {
+    try {
+      const response = await axiosInstance.post('/connections/request', {
+        user_id: userId
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error sending connection request:', error);
+      throw error;
+    }
+  },
+  
+  // Respond to a connection request
+  respondToConnectionRequest: async (connectionId: string, action: 'accept' | 'decline') => {
+    try {
+      const response = await axiosInstance.post(`/connections/${connectionId}/respond`, {
+        action
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error responding to connection request:', error);
+      throw error;
+    }
+  },
+  
+  // Remove a connection
+  removeConnection: async (connectionId: string) => {
+    try {
+      const response = await axiosInstance.delete(`/connections/${connectionId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error removing connection:', error);
+      throw error;
+    }
+  },
+  
+  // Get suggested connections
+  getSuggestedConnections: async (limit?: number, minScore?: number) => {
+    try {
+      let url = '/connections/suggested';
+      const params = new URLSearchParams();
+      
+      if (limit) params.append('limit', limit.toString());
+      if (minScore) params.append('min_score', minScore.toString());
+      
+      const queryString = params.toString();
+      if (queryString) url += `?${queryString}`;
+      
+      const response = await axiosInstance.get(url);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching suggested connections:', error);
+      throw error;
+    }
+  }
+};

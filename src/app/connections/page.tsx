@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useConnections, useSuggestedConnections, useSendConnectionRequest, useRespondToConnectionRequest } from "@/hooks/useConnections";
 
 // Mock data for connections
 const mockConnections = [
@@ -167,6 +168,12 @@ export default function ConnectionsPage() {
   const [sortOrder, setSortOrder] = useState("compatibility");
   const [filterThreshold, setFilterThreshold] = useState(0);
   const [activeTab, setActiveTab] = useState("connections");
+
+  const { data: connections = [], isLoading: connectionsLoading } = useConnections("accepted");
+  const { data: pendingRequests = [], isLoading: pendingLoading } = useConnections("pending");
+  const { data: suggestions = [], isLoading: suggestionsLoading } = useSuggestedConnections(undefined, filterThreshold);
+  const sendConnectionRequest = useSendConnectionRequest();
+  const respondToConnectionRequest = useRespondToConnectionRequest();
   
   // Filter and sort connections based on user input
   const filterConnections = (connections: typeof mockConnections) => {
