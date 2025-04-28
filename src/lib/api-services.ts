@@ -1,6 +1,6 @@
+
 import { axiosInstance } from "./auth-service";
 
-// Assessment API Services
 export const AssessmentService = {
   // Get all assessments for the user
   getAssessments: async () => {
@@ -86,16 +86,16 @@ export const AssessmentService = {
   }
 };
 
-// Compatibility API Services
+// Compatibility API Services - keeping existing code
 export const CompatibilityService = {
   // Get compatibility matrix
-  getMatrix: async (dimensionId?: string | null, threshold?: number | null, minScore = null) => {
+  getMatrix: async (dimensionId?: string | null, minScore?: number | null) => {
     try {
       let url = '/compatibility/matrix';
       const params = new URLSearchParams();
       
       if (dimensionId) params.append('dimension_id', dimensionId);
-      if (minScore) params.append('min_score', minScore);
+      if (minScore !== null && minScore !== undefined) params.append('min_score', minScore.toString());
       
       const queryString = params.toString();
       if (queryString) url += `?${queryString}`;
@@ -131,9 +131,9 @@ export const CompatibilityService = {
   }
 };
 
-// Connections API Services
+// Enhanced Connections API Services
 export const ConnectionsService = {
-  // Get all connections for the user
+  // Get all connections for the user with optional status filter
   getConnections: async (status?: string) => {
     try {
       let url = '/connections';
@@ -141,10 +141,15 @@ export const ConnectionsService = {
         url += `?status=${status}`;
       }
       const response = await axiosInstance.get(url);
+      
+      // Return the full data structure with connections array
       return response.data;
     } catch (error) {
       console.error('Error fetching connections:', error);
-      throw error;
+      throw {
+        message: 'Failed to load connections. Please try again.',
+        originalError: error
+      };
     }
   },
   
@@ -155,53 +160,73 @@ export const ConnectionsService = {
         user_id: userId
       });
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      // Handle specific error responses from the API
+      const errorDetail = error.response?.data?.detail || 'Failed to send connection request';
       console.error('Error sending connection request:', error);
-      throw error;
+      throw {
+        message: errorDetail,
+        originalError: error
+      };
     }
   },
   
-  // Respond to a connection request
+  // Respond to a connection request (accept or decline)
   respondToConnectionRequest: async (connectionId: string, action: 'accept' | 'decline') => {
     try {
       const response = await axiosInstance.post(`/connections/${connectionId}/respond`, {
         action
       });
       return response.data;
-    } catch (error) {
-      console.error('Error responding to connection request:', error);
-      throw error;
+    } catch (error: any) {
+      // Handle specific error responses
+      const errorDetail = error.response?.data?.detail || `Failed to ${action} connection request`;
+      console.error(`Error ${action}ing connection request:`, error);
+      throw {
+        message: errorDetail,
+        originalError: error
+      };
     }
   },
   
-  // Remove a connection
+  // Remove a connection or cancel a request
   removeConnection: async (connectionId: string) => {
     try {
       const response = await axiosInstance.delete(`/connections/${connectionId}`);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      // Handle specific error responses
+      const errorDetail = error.response?.data?.detail || 'Failed to remove connection';
       console.error('Error removing connection:', error);
-      throw error;
+      throw {
+        message: errorDetail,
+        originalError: error
+      };
     }
   },
   
-  // Get suggested connections
+  // Get suggested connections with optional parameters
   getSuggestedConnections: async (limit?: number, minScore?: number) => {
     try {
       let url = '/connections/suggested';
       const params = new URLSearchParams();
       
       if (limit) params.append('limit', limit.toString());
-      if (minScore) params.append('min_score', minScore.toString());
+      if (minScore !== undefined) params.append('min_score', minScore.toString());
       
       const queryString = params.toString();
       if (queryString) url += `?${queryString}`;
       
       const response = await axiosInstance.get(url);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      // Handle specific error responses
+      const errorDetail = error.response?.data?.detail || 'Failed to fetch suggested connections';
       console.error('Error fetching suggested connections:', error);
-      throw error;
+      throw {
+        message: errorDetail,
+        originalError: error
+      };
     }
   }
 };
