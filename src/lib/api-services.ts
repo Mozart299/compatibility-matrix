@@ -86,7 +86,6 @@ export const AssessmentService = {
   }
 };
 
-// Compatibility API Services - keeping existing code
 export const CompatibilityService = {
   // Get compatibility matrix
   getMatrix: async (dimensionId?: string | null, minScore?: number | null) => {
