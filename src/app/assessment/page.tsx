@@ -1,4 +1,3 @@
-// src/app/assessment/page.tsx (updated with React Query)
 "use client";
 
 import { useState } from "react";
