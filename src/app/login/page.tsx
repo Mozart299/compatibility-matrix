@@ -124,6 +124,7 @@ export default function LoginPage() {
                   value={formData.email}
                   onChange={handleChange}
                   disabled={isLoading}
+                  autoComplete="username"
                 />
               </div>
               <div className="space-y-2">
@@ -145,6 +146,7 @@ export default function LoginPage() {
                     value={formData.password}
                     onChange={handleChange}
                     disabled={isLoading}
+                    autoComplete="current-password"
                   />
                   <button
                     type="button"
