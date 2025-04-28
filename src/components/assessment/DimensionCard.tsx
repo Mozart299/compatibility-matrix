@@ -1,4 +1,4 @@
-// src/components/assessment/DimensionCard.tsx
+
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -12,12 +12,19 @@ interface DimensionCardProps {
     dimension_description: string;
     status: string;
     progress: number;
+    id?: string; // Assessment ID for completed assessments
   };
   onStartAssessment: (dimensionId: string) => void;
+  onReviewAssessment?: (assessmentId: string) => void;
   loading: boolean;
 }
 
-export function DimensionCard({ dimension, onStartAssessment, loading }: DimensionCardProps) {
+export function DimensionCard({ 
+  dimension, 
+  onStartAssessment, 
+  onReviewAssessment,
+  loading 
+}: DimensionCardProps) {
   return (
     <Card className={dimension.status === "completed" ? "border-green-200" : ""}>
       <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
@@ -54,8 +61,12 @@ export function DimensionCard({ dimension, onStartAssessment, loading }: Dimensi
         </div>
       </CardContent>
       <CardFooter className="px-4 sm:px-6 py-3 sm:py-4">
-        {dimension.status === "completed" && (
-          <Button variant="outline" className="w-full text-xs sm:text-sm">
+        {dimension.status === "completed" && dimension.id && onReviewAssessment && (
+          <Button 
+            variant="outline" 
+            className="w-full text-xs sm:text-sm"
+            onClick={() => dimension.id && onReviewAssessment(dimension.id)}
+          >
             Review Answers
           </Button>
         )}

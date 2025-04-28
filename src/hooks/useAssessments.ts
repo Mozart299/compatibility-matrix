@@ -24,7 +24,7 @@ export function useAssessment(assessmentId: string | null) {
   });
 }
 
-export function useStartAssessment() {
+export function useStartAssessment(p0: { onError: (error: any) => void; }) {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -38,7 +38,7 @@ export function useStartAssessment() {
   });
 }
 
-export function useSubmitResponse() {
+export function useSubmitResponse(p0: { onError: (error: any) => void; }) {
   const queryClient = useQueryClient();
   
   return useMutation({

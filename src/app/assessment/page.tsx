@@ -16,10 +16,25 @@ import {
 } from "@/hooks/useAssessments";
 import { useEffect } from "react";
 import { saveCurrentAssessment, getCurrentAssessment, clearCurrentAssessment } from "@/utils/assessment-storage";
+import { AssessmentReviewView } from "@/components/assessment/AssessmentReviewView";
+
+// Define interfaces for type safety
+interface Dimension {
+  dimension_id: string;
+  dimension_name: string;
+  dimension_description: string;
+  status: string;
+  progress: number;
+  id?: string;
+}
+interface AssessmentData {
+  assessments?: Dimension[];
+  overall_progress: number;
+}
 
 export default function AssessmentPage() {
   // State for view management
-  const [view, setView] = useState<"dimensions" | "questions" | "completion">("dimensions");
+  const [viewMode, setViewMode] = useState<'dimensions' | 'assessment' | 'completion' | 'review'>('dimensions');
   const [activeAssessmentId, setActiveAssessmentId] = useState<string | null>(null);
 
   // Fetch assessments data
@@ -31,11 +46,15 @@ export default function AssessmentPage() {
   } = useAssessments();
 
   // Mutations
-  const startAssessment = useStartAssessment();
-  const submitResponse = useSubmitResponse();
+  const startAssessment = useStartAssessment({
+    onError: (error) => console.error("Assessment start error:", error)
+  });
+  const submitResponse = useSubmitResponse({
+    onError: (error) => console.error("Response submission error:", error)
+  });
 
-  // Extract data
-  const assessments = assessmentsData?.assessments || [];
+  // Extract data with type safety
+  const assessments: Dimension[] = assessmentsData?.assessments || [];
   const overallProgress = assessmentsData?.overall_progress || 0;
 
   // Handle starting an assessment
@@ -43,7 +62,7 @@ export default function AssessmentPage() {
     try {
       const result = await startAssessment.mutateAsync(dimensionId);
       setActiveAssessmentId(result.assessment_id);
-      setView("questions");
+      setViewMode('assessment');
     } catch (error) {
       console.error("Failed to start assessment:", error);
     }
@@ -59,10 +78,10 @@ export default function AssessmentPage() {
       });
 
       if (result.status === "completed") {
-        setView("completion");
+        setViewMode("completion");
         await refetchAssessments();
       } else if (!result.next_question) {
-        setView("completion");
+        setViewMode("completion");
       }
     } catch (error) {
       console.error("Failed to submit response:", error);
@@ -71,31 +90,37 @@ export default function AssessmentPage() {
   };
 
   useEffect(() => {
-    if (view === "questions" && activeAssessmentId) {
+    if (viewMode === "assessment" && activeAssessmentId) {
       saveCurrentAssessment(activeAssessmentId);
-    } else if (view !== "questions") {
+    } else if (viewMode !== "assessment") {
       clearCurrentAssessment();
     }
-  }, [view, activeAssessmentId]);
+  }, [viewMode, activeAssessmentId]);
 
   // Check for resumed assessment on initial load
   useEffect(() => {
     const savedAssessmentId = getCurrentAssessment();
-    if (savedAssessmentId && view === "dimensions") {
+    if (savedAssessmentId && viewMode === "dimensions") {
       setActiveAssessmentId(savedAssessmentId);
-      setView("questions");
+      setViewMode("assessment");
     }
   }, []);
 
   // Handle returning to dimensions view
   const handleBackToDimensions = async () => {
-    setView("dimensions");
+    setViewMode("dimensions");
     setActiveAssessmentId(null);
     await refetchAssessments();
   };
 
+  // Handle reviewing an assessment
+  const handleReviewAssessment = (assessmentId: string) => {
+    setActiveAssessmentId(assessmentId);
+    setViewMode('review');
+  };
+
   // Loading state
-  if (isLoadingAssessments && view === "dimensions") {
+  if (isLoadingAssessments && viewMode === "dimensions") {
     return (
       <AppLayout>
         <div className="container py-6 sm:py-8 md:py-10">
@@ -111,7 +136,7 @@ export default function AssessmentPage() {
   }
 
   // Error state
-  if (assessmentsError && view === "dimensions") {
+  if (assessmentsError && viewMode === "dimensions") {
     return (
       <AppLayout>
         <div className="container py-6 sm:py-8 md:py-10">
@@ -136,49 +161,65 @@ export default function AssessmentPage() {
     ? startAssessment.data && startAssessment.data.assessment_id === activeAssessmentId
       ? startAssessment.data
       : submitResponse.data && submitResponse.data.assessment?.id === activeAssessmentId
-        ? submitResponse.data
+        ? submitResponse.data.assessment
         : null
     : null;
 
   return (
     <AppLayout>
-      <div className="container py-6 sm:py-8 md:py-10">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Assessment</h1>
-            <p className="text-sm md:text-base text-muted-foreground">
-              Complete the assessment to improve your compatibility results
-            </p>
-          </div>
-          <AssessmentProgress overallProgress={overallProgress} />
-        </div>
-
-        {view === "dimensions" && (
-          <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {assessments.map((dimension: any) => (
-              <DimensionCard
-                key={dimension.dimension_id}
-                dimension={dimension}
-                onStartAssessment={handleStartAssessment}
-                loading={startAssessment.isPending}
+      <div className="container py-10">
+        {viewMode === 'dimensions' && (
+          <>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">Assessments</h1>
+                <p className="text-muted-foreground">
+                  Complete assessments to improve your compatibility insights
+                </p>
+              </div>
+              <AssessmentProgress
+                overallProgress={assessmentsData?.overall_progress || 0}
+                className="mt-4 md:mt-0"
               />
-            ))}
-          </div>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {assessmentsData?.assessments?.map((dimension: Dimension) => (
+                <DimensionCard
+                  key={dimension.dimension_id}
+                  dimension={dimension}
+                  onStartAssessment={handleStartAssessment}
+                  onReviewAssessment={handleReviewAssessment}
+                  loading={startAssessment.isPending}
+                />
+              ))}
+            </div>
+          </>
         )}
 
-        {view === "questions" && activeAssessment && (
+        {viewMode === 'assessment' && activeAssessmentId && (
           <QuestionContainer
-            activeAssessment={activeAssessment}
+            activeAssessment={{
+              assessment_id: activeAssessmentId,
+              ...activeAssessment
+            }}
             onBackToDimensions={handleBackToDimensions}
             onSubmitResponse={handleSubmitResponse}
           />
         )}
 
-        {view === "completion" && activeAssessment && (
+        {viewMode === 'completion' && (
           <CompletionView
-            activeAssessment={activeAssessment}
-            overallProgress={overallProgress}
+            activeAssessment={activeAssessment || {}}
+            overallProgress={assessmentsData?.overall_progress || 0}
             onBackToDimensions={handleBackToDimensions}
+          />
+        )}
+
+        {viewMode === 'review' && activeAssessmentId && (
+          <AssessmentReviewView
+            assessmentId={activeAssessmentId}
+            onBack={handleBackToDimensions}
           />
         )}
       </div>

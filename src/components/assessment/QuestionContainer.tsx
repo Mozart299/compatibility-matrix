@@ -1,4 +1,4 @@
-// src/components/assessment/QuestionContainer.tsx (updated)
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,16 +46,17 @@ export function QuestionContainer({
   };
   
   const handleNextQuestion = async () => {
-    // Show validation if not already showing
+    // First, show validation if not already showing
     if (!showValidation) {
       setShowValidation(true);
       
-      // If the response isn't valid, don't proceed
+      // Check if response is valid before proceeding
       if (!isResponseValid) {
         return;
       }
     }
     
+    // Additional validation check before proceeding
     if (!currentResponse || !activeAssessment || !currentQuestion || !isResponseValid) {
       return;
     }
@@ -63,16 +64,20 @@ export function QuestionContainer({
     try {
       setResponseSubmitting(true);
       
+      // Submit the response and wait for completion
       await onSubmitResponse(
         activeAssessment.assessment_id,
         currentQuestion.id,
         currentResponse
       );
       
+      // Reset state after successful submission
       setCurrentResponse(null);
       setShowValidation(false);
-      setResponseSubmitting(false);
+      
     } catch (err) {
+      console.error("Error submitting response:", err);
+    } finally {
       setResponseSubmitting(false);
     }
   };
