@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layouts/AppLayout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader, AlertCircle } from "lucide-react";
@@ -14,11 +14,9 @@ import {
   useStartAssessment,
   useSubmitResponse
 } from "@/hooks/useAssessments";
-import { useEffect } from "react";
 import { saveCurrentAssessment, getCurrentAssessment, clearCurrentAssessment } from "@/utils/assessment-storage";
 import { AssessmentReviewView } from "@/components/assessment/AssessmentReviewView";
 
-// Define interfaces for type safety
 interface Dimension {
   dimension_id: string;
   dimension_name: string;
@@ -33,11 +31,11 @@ interface AssessmentData {
 }
 
 export default function AssessmentPage() {
-  // State for view management
+  // State and hooks at the top level
   const [viewMode, setViewMode] = useState<'dimensions' | 'assessment' | 'completion' | 'review'>('dimensions');
   const [activeAssessmentId, setActiveAssessmentId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Fetch assessments data
   const {
     data: assessmentsData,
     isLoading: isLoadingAssessments,
@@ -45,59 +43,47 @@ export default function AssessmentPage() {
     refetch: refetchAssessments
   } = useAssessments();
 
-  // Mutations
   const startAssessment = useStartAssessment({
-    onError: (error) => console.error("Assessment start error:", error)
+    onError: (error) => {
+      console.error("Assessment start error:", error);
+      setErrorMessage("Failed to start assessment. Please try again.");
+    }
   });
   const submitResponse = useSubmitResponse({
-    onError: (error) => console.error("Response submission error:", error)
+    onError: (error) => {
+      console.error("Response submission error:", error);
+      setErrorMessage("Failed to submit response. Please try again.");
+    }
   });
 
-  // Extract data with type safety
-  const assessments: Dimension[] = assessmentsData?.assessments || [];
-  const overallProgress = assessmentsData?.overall_progress || 0;
+  // Construct activeAssessment
+  const activeAssessment = activeAssessmentId
+    ? submitResponse.data && submitResponse.data.assessment?.id === activeAssessmentId
+      ? {
+          ...submitResponse.data.assessment,
+          next_question: submitResponse.data.next_question,
+          completed_questions: submitResponse.data.completed_questions,
+          total_questions: submitResponse.data.total_questions
+        }
+      : startAssessment.data && startAssessment.data.assessment_id === activeAssessmentId
+        ? startAssessment.data
+        : null
+    : null;
 
-  // Handle starting an assessment
-  const handleStartAssessment = async (dimensionId: string) => {
-    try {
-      const result = await startAssessment.mutateAsync(dimensionId);
-      setActiveAssessmentId(result.assessment_id);
-      setViewMode('assessment');
-    } catch (error) {
-      console.error("Failed to start assessment:", error);
-    }
-  };
+  // Log activeAssessment for debugging
+  useEffect(() => {
+    console.log("activeAssessment constructed:", activeAssessment);
+  }, [activeAssessment]);
 
-  // Handle submitting a response
-  const handleSubmitResponse = async (assessmentId: string, questionId: string, value: string) => {
-    try {
-      const result = await submitResponse.mutateAsync({
-        assessmentId,
-        questionId,
-        value
-      });
-
-      if (result.status === "completed") {
-        setViewMode("completion");
-        await refetchAssessments();
-      } else if (!result.next_question) {
-        setViewMode("completion");
-      }
-    } catch (error) {
-      console.error("Failed to submit response:", error);
-      throw error;
-    }
-  };
-
+  // Other hooks
   useEffect(() => {
     if (viewMode === "assessment" && activeAssessmentId) {
       saveCurrentAssessment(activeAssessmentId);
-    } else if (viewMode !== "assessment") {
+    } else {
       clearCurrentAssessment();
     }
   }, [viewMode, activeAssessmentId]);
 
-  // Check for resumed assessment on initial load
   useEffect(() => {
     const savedAssessmentId = getCurrentAssessment();
     if (savedAssessmentId && viewMode === "dimensions") {
@@ -106,20 +92,61 @@ export default function AssessmentPage() {
     }
   }, []);
 
-  // Handle returning to dimensions view
+  // Handlers
+  const handleStartAssessment = async (dimensionId: string) => {
+    try {
+      setErrorMessage(null);
+      const result = await startAssessment.mutateAsync(dimensionId);
+      setActiveAssessmentId(result.assessment_id);
+      setViewMode('assessment');
+    } catch (error) {
+      console.error("Failed to start assessment:", error);
+      setErrorMessage("Failed to start assessment. Please try again.");
+    }
+  };
+
+  const handleSubmitResponse = async (assessmentId: string, questionId: string, value: string) => {
+    try {
+      setErrorMessage(null);
+      const result = await submitResponse.mutateAsync({
+        assessmentId,
+        questionId,
+        value
+      });
+
+      console.log("Submit response result:", result);
+
+      if (result.status === "completed") {
+        console.log("Assessment completed, transitioning to completion view");
+        setViewMode("completion");
+        await refetchAssessments();
+      } else if (result.next_question) {
+        console.log("Next question available:", result.next_question);
+      } else {
+        console.warn("No next question and not completed, transitioning to completion");
+        setViewMode("completion");
+      }
+    } catch (error) {
+      console.error("Failed to submit response:", error);
+      setErrorMessage("Failed to submit response. Please try again.");
+      throw error;
+    }
+  };
+
   const handleBackToDimensions = async () => {
     setViewMode("dimensions");
     setActiveAssessmentId(null);
+    setErrorMessage(null);
     await refetchAssessments();
   };
 
-  // Handle reviewing an assessment
   const handleReviewAssessment = (assessmentId: string) => {
     setActiveAssessmentId(assessmentId);
     setViewMode('review');
+    setErrorMessage(null);
   };
 
-  // Loading state
+  // Early returns after all hooks
   if (isLoadingAssessments && viewMode === "dimensions") {
     return (
       <AppLayout>
@@ -135,7 +162,6 @@ export default function AssessmentPage() {
     );
   }
 
-  // Error state
   if (assessmentsError && viewMode === "dimensions") {
     return (
       <AppLayout>
@@ -156,18 +182,19 @@ export default function AssessmentPage() {
     );
   }
 
-  // Get the active assessment data
-  const activeAssessment = activeAssessmentId
-    ? startAssessment.data && startAssessment.data.assessment_id === activeAssessmentId
-      ? startAssessment.data
-      : submitResponse.data && submitResponse.data.assessment?.id === activeAssessmentId
-        ? submitResponse.data.assessment
-        : null
-    : null;
+  const assessments: Dimension[] = assessmentsData?.assessments || [];
+  const overallProgress = assessmentsData?.overall_progress || 0;
 
   return (
     <AppLayout>
       <div className="container py-10">
+        {errorMessage && (
+          <Alert variant="destructive" className="mb-6 max-w-md mx-auto">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
+
         {viewMode === 'dimensions' && (
           <>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
@@ -178,13 +205,13 @@ export default function AssessmentPage() {
                 </p>
               </div>
               <AssessmentProgress
-                overallProgress={assessmentsData?.overall_progress || 0}
+                overallProgress={overallProgress}
                 className="mt-4 md:mt-0"
               />
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {assessmentsData?.assessments?.map((dimension: Dimension) => (
+              {assessments.map((dimension: Dimension) => (
                 <DimensionCard
                   key={dimension.dimension_id}
                   dimension={dimension}
@@ -211,7 +238,7 @@ export default function AssessmentPage() {
         {viewMode === 'completion' && (
           <CompletionView
             activeAssessment={activeAssessment || {}}
-            overallProgress={assessmentsData?.overall_progress || 0}
+            overallProgress={overallProgress}
             onBackToDimensions={handleBackToDimensions}
           />
         )}
