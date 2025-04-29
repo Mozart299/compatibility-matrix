@@ -81,7 +81,7 @@ interface PageParams {
   id: string;
 }
 
-export default function CompatibilityDetailPage({ params }: { params: PageParams }) {
+export default function CompatibilityDetailPage({ params }: { params: any }) {
   const { id } = params;
   const [compatibilityData, setCompatibilityData] = useState<CompatibilityData | null>(null);
   const [loading, setLoading] = useState(true);
