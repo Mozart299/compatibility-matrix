@@ -130,6 +130,42 @@ const AuthService = {
   },
 
   /**
+   * Get Google authentication URL
+   */
+  getGoogleAuthUrl: async () => {
+    try {
+      const response = await axiosInstance.get("/auth/login/google");
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Handle Google authentication callback
+   */
+  handleGoogleCallback: async (code: string) => {
+    try {
+      // Send the code to your backend to complete the authentication
+      const response = await axiosInstance.post("/auth/callback/google", { code });
+      
+      // Store tokens in localStorage (Google auth typically means "remember me")
+      const authTokens = {
+        accessToken: response.data.access_token,
+        refreshToken: response.data.refresh_token,
+      };
+      localStorage.setItem("authTokens", JSON.stringify(authTokens));
+
+      // Set the access token as a cookie
+      document.cookie = `accessToken=${response.data.access_token}; path=/; secure; samesite=strict`;
+
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
    * Logout the current user
    */
   logout: async () => {

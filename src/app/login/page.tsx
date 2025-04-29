@@ -1,234 +1,216 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { EyeIcon, EyeOffIcon } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton';
+import { AlertCircle } from 'lucide-react';
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
 
-// Separate component for the login page content
-function LoginPageContent() {
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    rememberMe: false,
-  });
-
-  const { login, error, clearError } = useAuth();
-  const searchParams = useSearchParams();
+  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const { login, isLoading, error: authError, clearError } = useAuth();
   const router = useRouter();
-  const registered = searchParams.get('registered');
-  const from = searchParams.get('from');
+  const searchParams = useSearchParams();
 
-  interface FormData {
-    email: string;
-    password: string;
-    rememberMe: boolean;
-  }
+  useEffect(() => {
+    // Check if redirected from registration
+    const registered = searchParams.get('registered');
+    if (registered) {
+      setIsRegistered(true);
+    }
 
-  interface HandleChangeEvent extends React.ChangeEvent<HTMLInputElement> {}
+    // Check for authentication errors
+    const authErrorParam = searchParams.get('error');
+    if (authErrorParam === 'auth_failed') {
+      setError('Google authentication failed. Please try again.');
+    } else if (authErrorParam === 'no_code') {
+      setError('Authentication code missing. Please try again.');
+    } else if (authError) {
+      setError(authError);
+    }
 
-  const handleChange = (e: HandleChangeEvent) => {
-    const { name, value, type, checked } = e.target;
-    clearError();
-    setFormData((prev: FormData) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-  };
+    // Clear errors when component unmounts
+    return () => {
+      clearError();
+    };
+  }, [authError, clearError, searchParams]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setError(null);
+
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      return;
+    }
 
     try {
-      await login(formData.email, formData.password, formData.rememberMe);
-      router.push(from || '/dashboard');
-    } catch (err) {
-      // Error is handled in auth context
-      setIsLoading(false);
+      await login(email, password, rememberMe);
+
+      // Get the redirect URL from query params or default to dashboard
+      const redirectPath = searchParams.get('from') || '/dashboard';
+      router.push(redirectPath);
+    } catch (err: any) {
+      console.error('Login error:', err);
+      // Error is handled by the auth context
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-10 w-10 text-primary"
-            >
-              <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" />
-              <path d="M8.5 8.5v.01" />
-              <path d="M16 12v.01" />
-              <path d="M12 16v.01" />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold">Compatibility Matrix</h1>
-          <p className="text-muted-foreground mt-1">Log in to your account</p>
+    <div className="flex min-h-screen flex-col justify-center py-12 sm:px-6 lg:px-8 bg-background">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="mx-auto flex justify-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-10 w-10"
+          >
+            <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" />
+            <path d="M8.5 8.5v.01" />
+            <path d="M16 12v.01" />
+            <path d="M12 16v.01" />
+          </svg>
         </div>
+        <h2 className="mt-6 text-center text-2xl font-bold tracking-tight">
+          Sign in to your account
+        </h2>
+        <p className="mt-2 text-center text-sm text-muted-foreground">
+          Or{' '}
+          <Link
+            href="/signup"
+            className="font-medium text-primary hover:text-primary/90"
+          >
+            create a new account
+          </Link>
+        </p>
+      </div>
 
-        <Card>
-          <form onSubmit={handleSubmit}>
-            <CardHeader>
-              <CardTitle>Log In</CardTitle>
-              <CardDescription>Enter your credentials to access your account</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {registered && (
-                <Alert className="bg-green-50 text-green-700 border-green-200">
-                  <AlertDescription>
-                    Registration successful! Please log in with your credentials.
-                  </AlertDescription>
-                </Alert>
-              )}
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-card px-4 py-8 shadow sm:rounded-lg sm:px-10">
+          {isRegistered && (
+            <Alert className="mb-6">
+              <AlertDescription>
+                Registration successful! Please sign in with your new account.
+              </AlertDescription>
+            </Alert>
+          )}
 
-              {from && (
-                <Alert>
-                  <AlertDescription>Please log in to access {from}.</AlertDescription>
-                </Alert>
-              )}
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div>
+              <Label htmlFor="email">Email address</Label>
+              <div className="mt-2">
                 <Input
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="name@example.com"
+                  autoComplete="email"
                   required
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  autoComplete="username"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                    Forgot password?
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <div className="text-sm">
+                  <Link
+                    href="/forgot-password"
+                    className="font-medium text-primary hover:text-primary/90"
+                  >
+                    Forgot your password?
                   </Link>
                 </div>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={formData.password}
-                    onChange={handleChange}
-                    disabled={isLoading}
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
-                  </button>
-                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="remember"
-                  name="rememberMe"
-                  className="h-4 w-4 rounded border-gray-300"
-                  checked={formData.rememberMe}
-                  onChange={handleChange}
-                  disabled={isLoading}
+              <div className="mt-2 relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pr-10"
                 />
-                <Label htmlFor="remember" className="text-sm font-normal">
-                  Remember me for 30 days
-                </Label>
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOffIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
               </div>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-4">
+            </div>
+
+            <div className="flex items-center">
+              <Checkbox
+                id="remember-me"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+              />
+              <Label
+                htmlFor="remember-me"
+                className="ml-2 block text-sm leading-6"
+              >
+                Remember me
+              </Label>
+            </div>
+
+            <div>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    Logging in...
-                    <svg
-                      className="ml-2 h-4 w-4 animate-spin"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </>
-                ) : (
-                  'Log in'
-                )}
+                {isLoading ? 'Signing in...' : 'Sign in'}
               </Button>
-
-              <div className="relative w-full">
-                <Separator className="my-4" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="bg-card px-2 text-xs text-muted-foreground">OR CONTINUE WITH</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 w-full">
-                <Button variant="outline" type="button" className="w-full" disabled={isLoading}>
-                  <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M20.283 10.356h-8.327v3.451h4.792c-.446 2.193-2.313 3.453-4.792 3.453a5.27 5.27 0 0 1-5.279-5.28 5.27 5.27 0 0 1 5.279-5.279c1.259 0 2.397.447 3.29 1.178l2.6-2.599c-1.584-1.381-3.615-2.233-5.89-2.233a8.908 8.908 0 0 0-8.934 8.934 8.907 8.907 0 0 0 8.934 8.934c4.467 0 8.529-3.249 8.529-8.934 0-.528-.081-1.097-.202-1.625z"></path>
-                  </svg>
-                  Google
-                </Button>
-                <Button variant="outline" type="button" className="w-full" disabled={isLoading}>
-                  <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"></path>
-                  </svg>
-                  Facebook
-                </Button>
-              </div>
-
-              <div className="text-center text-sm">
-                Don't have an account?{' '}
-                <Link href="/signup" className="text-primary hover:underline">
-                  Sign up
-                </Link>
-              </div>
-            </CardFooter>
+            </div>
           </form>
-        </Card>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-card px-2 text-muted-foreground">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <GoogleAuthButton fullWidth text="Sign in with Google" />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  );
-}
-
-// Main page component with Suspense
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <LoginPageContent />
-    </Suspense>
   );
 }
