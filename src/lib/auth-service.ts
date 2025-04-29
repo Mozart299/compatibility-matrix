@@ -2,7 +2,7 @@
 import axios from "axios";
 
 // Base URL from environment variable, with fallback
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
 // Configure axios with defaults
 const axiosInstance = axios.create({
@@ -15,7 +15,14 @@ const axiosInstance = axios.create({
 // Add interceptor to include auth token in requests
 axiosInstance.interceptors.request.use(
   (config) => {
-    const tokens = JSON.parse(localStorage.getItem("authTokens") || sessionStorage.getItem("authTokens") || "{}");
+    // Try to get tokens from storage
+    let tokens;
+    try {
+      tokens = JSON.parse(localStorage.getItem("authTokens") || sessionStorage.getItem("authTokens") || "{}");
+    } catch (e) {
+      tokens = {};
+    }
+    
     const token = tokens.accessToken;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -36,7 +43,13 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const tokens = JSON.parse(localStorage.getItem("authTokens") || sessionStorage.getItem("authTokens") || "{}");
+        let tokens;
+        try {
+          tokens = JSON.parse(localStorage.getItem("authTokens") || sessionStorage.getItem("authTokens") || "{}");
+        } catch (e) {
+          tokens = {};
+        }
+        
         const refreshToken = tokens.refreshToken;
         if (!refreshToken) throw new Error("No refresh token available");
 
@@ -119,8 +132,6 @@ const AuthService = {
       storage.setItem("authTokens", JSON.stringify(authTokens));
 
       // Set the access token as a cookie
-      // Use secure and samesite flags for security
-      // You can adjust the expiration time as needed
       document.cookie = `accessToken=${response.data.access_token}; path=/; secure; samesite=strict`;
 
       return response.data;
@@ -137,6 +148,7 @@ const AuthService = {
       const response = await axiosInstance.get("/auth/login/google");
       return response.data;
     } catch (error: any) {
+      console.error("Failed to get Google auth URL:", error);
       throw error.response?.data || error;
     }
   },
@@ -146,6 +158,10 @@ const AuthService = {
    */
   handleGoogleCallback: async (code: string) => {
     try {
+      if (!code) {
+        throw new Error("No authentication code provided");
+      }
+      
       // Send the code to your backend to complete the authentication
       const response = await axiosInstance.post("/auth/callback/google", { code });
       
@@ -161,6 +177,7 @@ const AuthService = {
 
       return response.data;
     } catch (error: any) {
+      console.error("Google callback error:", error);
       throw error.response?.data || error;
     }
   },
@@ -174,13 +191,12 @@ const AuthService = {
       await axiosInstance.post("/auth/logout");
     } catch (error: any) {
       console.error("Logout error:", error);
-      throw error.response?.data || error;
     } finally {
       // Remove tokens from storage
       localStorage.removeItem("authTokens");
       sessionStorage.removeItem("authTokens");
       
-      // Clear the accessToken cookie by setting expiration in the past
+      // Clear the accessToken cookie
       document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict";
     }
   },
@@ -189,7 +205,15 @@ const AuthService = {
    * Check if user is authenticated
    */
   isAuthenticated: () => {
-    return !!(localStorage.getItem("authTokens") || sessionStorage.getItem("authTokens"));
+    try {
+      const authTokensStr = localStorage.getItem("authTokens") || sessionStorage.getItem("authTokens");
+      if (!authTokensStr) return false;
+      
+      const authTokens = JSON.parse(authTokensStr);
+      return !!authTokens.accessToken;
+    } catch (e) {
+      return false;
+    }
   },
 
   /**

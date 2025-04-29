@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import AuthService from "@/lib/auth-service";
@@ -27,15 +26,27 @@ export function GoogleAuthButton({
   const handleGoogleSignIn = async () => {
     try {
       setLocalLoading(true);
-      const { auth_url } = await AuthService.getGoogleAuthUrl();
+      const response = await AuthService.getGoogleAuthUrl();
       
-      // Redirect to Google auth URL
-      if (auth_url) {
-        window.location.href = auth_url;
-      } else {
-        console.error("No auth URL returned");
-        setLocalLoading(false);
+      console.log("Google auth response:", response);
+      
+      // Check if response exists
+      if (response) {
+        // Handle nested auth_url object with url property
+        if (response.auth_url && response.auth_url.url) {
+          window.location.href = response.auth_url.url;
+          return;
+        }
+        
+        // Alternative - check if auth_url itself is a string
+        if (typeof response.auth_url === 'string') {
+          window.location.href = response.auth_url;
+          return;
+        }
       }
+      
+      console.error("Invalid auth URL format:", response);
+      setLocalLoading(false);
     } catch (error) {
       console.error("Error initiating Google sign-in:", error);
       setLocalLoading(false);

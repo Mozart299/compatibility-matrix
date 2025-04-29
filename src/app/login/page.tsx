@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton';
 import { AlertCircle } from 'lucide-react';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
+import { GoogleAuthHandler } from '@/components/auth/GoogleAuthHandler';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -70,6 +71,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col justify-center py-12 sm:px-6 lg:px-8 bg-background">
+      <GoogleAuthHandler />
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="mx-auto flex justify-center">
           <svg
