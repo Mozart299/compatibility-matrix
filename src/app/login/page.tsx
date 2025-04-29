@@ -1,23 +1,24 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
-import { useAuth } from "@/contexts/auth-context";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useState, Suspense } from 'react';
+import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
-export default function LoginPage() {
+// Separate component for the login page content
+function LoginPageContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+    email: '',
+    password: '',
     rememberMe: false,
   });
 
@@ -33,14 +34,14 @@ export default function LoginPage() {
     rememberMe: boolean;
   }
 
-  interface HandleChangeEvent extends React.ChangeEvent<HTMLInputElement> { }
+  interface HandleChangeEvent extends React.ChangeEvent<HTMLInputElement> {}
 
   const handleChange = (e: HandleChangeEvent) => {
     const { name, value, type, checked } = e.target;
     clearError();
     setFormData((prev: FormData) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -50,7 +51,7 @@ export default function LoginPage() {
 
     try {
       await login(formData.email, formData.password, formData.rememberMe);
-      router.push(from || "/dashboard");
+      router.push(from || '/dashboard');
     } catch (err) {
       // Error is handled in auth context
       setIsLoading(false);
@@ -86,9 +87,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit}>
             <CardHeader>
               <CardTitle>Log In</CardTitle>
-              <CardDescription>
-                Enter your credentials to access your account
-              </CardDescription>
+              <CardDescription>Enter your credentials to access your account</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {registered && (
@@ -101,9 +100,7 @@ export default function LoginPage() {
 
               {from && (
                 <Alert>
-                  <AlertDescription>
-                    Please log in to access {from}.
-                  </AlertDescription>
+                  <AlertDescription>Please log in to access {from}.</AlertDescription>
                 </Alert>
               )}
 
@@ -130,10 +127,7 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="/forgot-password"
-                    className="text-sm text-primary hover:underline"
-                  >
+                  <Link href="/forgot-password" className="text-sm text-primary hover:underline">
                     Forgot password?
                   </Link>
                 </div>
@@ -141,7 +135,7 @@ export default function LoginPage() {
                   <Input
                     id="password"
                     name="password"
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     required
                     value={formData.password}
                     onChange={handleChange}
@@ -153,11 +147,7 @@ export default function LoginPage() {
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? (
-                      <EyeOffIcon className="h-5 w-5" />
-                    ) : (
-                      <EyeIcon className="h-5 w-5" />
-                    )}
+                    {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
@@ -194,16 +184,14 @@ export default function LoginPage() {
                     </svg>
                   </>
                 ) : (
-                  "Log in"
+                  'Log in'
                 )}
               </Button>
 
               <div className="relative w-full">
                 <Separator className="my-4" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="bg-card px-2 text-xs text-muted-foreground">
-                    OR CONTINUE WITH
-                  </span>
+                  <span className="bg-card px-2 text-xs text-muted-foreground">OR CONTINUE WITH</span>
                 </div>
               </div>
 
@@ -223,7 +211,7 @@ export default function LoginPage() {
               </div>
 
               <div className="text-center text-sm">
-                Don't have an account?{" "}
+                Don't have an account?{' '}
                 <Link href="/signup" className="text-primary hover:underline">
                   Sign up
                 </Link>
@@ -233,5 +221,14 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+// Main page component with Suspense
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
