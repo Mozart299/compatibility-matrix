@@ -15,44 +15,68 @@ export async function GET(request: NextRequest) {
     // Handle errors from Google's OAuth
     if (error) {
       console.error('Google OAuth error:', error);
-      return NextResponse.redirect(new URL(`/signup?error=${error}`, request.url)); // Changed to /signup
+      return NextResponse.redirect(new URL(`/login?error=${error}`, request.url));
     }
 
     if (!code) {
       console.error('No authorization code received from Google');
-      return NextResponse.redirect(new URL('/signup?error=no_code', request.url)); // Changed to /signup
+      return NextResponse.redirect(new URL('/login?error=no_code', request.url));
     }
 
-    console.log('Received Google auth code, forwarding to backend');
+    console.log('Received Google auth code:', code.substring(0, 10) + '...');
 
-    // Forward the code to your backend
-    const response = await axios.post(`${API_BASE_URL}/auth/callback/google`, { code });
+    // Forward the code to your backend using form data as expected by the backend
+    const formData = new FormData();
+    formData.append('code', code);
+    
+    const response = await axios.post(`${API_BASE_URL}/auth/callback/google`, formData);
 
     if (!response.data || !response.data.access_token) {
       console.error('Invalid response from backend:', response.data);
-      return NextResponse.redirect(new URL('/signup?error=invalid_token', request.url)); // Changed to /signup
+      return NextResponse.redirect(new URL('/login?error=invalid_token', request.url));
     }
 
-    // Set cookies with appropriate security settings
-    const cookieOptions = {
+    console.log('Successfully received tokens from backend');
+
+    // Create the redirect response first
+    const redirectResponse = NextResponse.redirect(new URL('/dashboard', request.url));
+
+    // Set tokens in localStorage via cookies
+    // Create a temporary cookie that will be read by client-side code
+    redirectResponse.cookies.set('googleAuthToken', response.data.access_token, {
       path: '/',
       secure: process.env.NODE_ENV === 'production',
+      httpOnly: false, // So client JS can read it
+      maxAge: 30, // Short-lived - just long enough for the client to read
+      sameSite: 'lax'
+    });
+
+    // Also set the HTTP-only cookie for auth middleware
+    redirectResponse.cookies.set('accessToken', response.data.access_token, {
+      path: '/',
+      secure: process.env.NODE_ENV === 'production', 
       httpOnly: true,
-      sameSite: 'lax' as const,
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-    };
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    });
 
-    // Set the response with cookies and redirect
-    const redirectResponse = NextResponse.redirect(new URL('/dashboard?google_success=true', request.url)); // Added query param
+    if (response.data.refresh_token) {
+      redirectResponse.cookies.set('refreshToken', response.data.refresh_token, {
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 30 // 30 days
+      });
+    }
 
-    // Set the access token as a client-accessible cookie
-    redirectResponse.cookies.set('accessToken', response.data.access_token, cookieOptions);
-
-    // Set a flag for client-side success message
-    redirectResponse.cookies.set('googleAuthSuccess', 'true', {
-      ...cookieOptions,
+    // Add a success flag for UI messaging
+    redirectResponse.cookies.set('auth_success', 'true', {
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: false,
-      maxAge: 60, // Short-lived cookie
+      maxAge: 30, // Short-lived
+      sameSite: 'lax'
     });
 
     return redirectResponse;
@@ -62,7 +86,7 @@ export async function GET(request: NextRequest) {
     // Extract error details for better debugging
     let errorMessage = 'auth_failed';
     if (error.response) {
-      console.error('Backend response error:', error.response.data);
+      console.error('Backend response error:', JSON.stringify(error.response.data));
       errorMessage = `backend_error_${error.response.status}`;
     } else if (error.request) {
       console.error('No response received from backend');
@@ -72,7 +96,7 @@ export async function GET(request: NextRequest) {
       errorMessage = 'request_setup_error';
     }
 
-    // Redirect to signup page with specific error
-    return NextResponse.redirect(new URL(`/signup?error=${errorMessage}`, request.url)); // Changed to /signup
+    // Redirect to login page with specific error
+    return NextResponse.redirect(new URL(`/login?error=${errorMessage}`, request.url));
   }
 }

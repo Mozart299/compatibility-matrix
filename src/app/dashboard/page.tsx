@@ -11,22 +11,38 @@ import { CompatibilityService, AssessmentService } from "@/lib/api-services";
 import Link from "next/link";
 import { useAssessments, useAssessmentProgress } from "@/hooks/useAssessments";
 import { CompatibilityCard } from "@/components/compatibility/compatibility-card";
+import { handleAuthTokens, checkAuthSuccess } from "@/utils/auth-token-handler";
+import { toast } from "sonner";
 
 export default function Dashboard() {
   // States for data loading status
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // State for top connections data
   const [topConnections, setTopConnections] = useState<any[]>([]);
   const [overallScore, setOverallScore] = useState<number | null>(null);
   const [dimensionScores, setDimensionScores] = useState<any[]>([]);
   const [recentAssessments, setRecentAssessments] = useState<any[]>([]);
-  
+
   // Use the assessment hooks
   const { data: assessmentsData, isLoading: assessmentsLoading, error: assessmentsError } = useAssessments();
   const { data: progressData, isLoading: progressLoading, error: progressError } = useAssessmentProgress();
-  
+
+  // Handle Google auth callback on component mount
+  useEffect(() => {
+    // Check if we have tokens from Google auth
+    const tokenSaved = handleAuthTokens(true);
+    if (tokenSaved) {
+      toast.success("Successfully signed in with Google!");
+    }
+
+    // Check for general auth success
+    if (checkAuthSuccess()) {
+      toast.success("Authentication successful!");
+    }
+  }, []);
+
   // Load compatibility data on component mount
   useEffect(() => {
     async function loadDashboardData() {
@@ -36,28 +52,28 @@ export default function Dashboard() {
 
         // Get compatibility matrix for overall scores
         const matrixData = await CompatibilityService.getMatrix();
-        
+
         // Find current user in matrix
-        const currentUserEntry = matrixData.matrix.find((user: any) => 
+        const currentUserEntry = matrixData.matrix.find((user: any) =>
           user.name === "You" || user.scores.some((score: any) => score.score === 100)
         );
-        
+
         if (currentUserEntry) {
           // Extract top connections (excluding self)
           const connections = currentUserEntry.scores
             .filter((score: any) => score.score !== 100 && score.score !== null)
             .sort((a: any, b: any) => (b.score || 0) - (a.score || 0))
             .slice(0, 3);
-          
+
           setTopConnections(connections);
         }
-        
+
         // Calculate average overall score
         if (currentUserEntry && currentUserEntry.scores.length > 0) {
           const validScores = currentUserEntry.scores.filter(
             (score: any) => score.score !== null && score.score !== 100 // exclude self-comparison
           );
-          
+
           if (validScores.length > 0) {
             const averageScore = Math.round(
               validScores.reduce((sum: number, score: any) => sum + score.score, 0) / validScores.length
@@ -65,11 +81,11 @@ export default function Dashboard() {
             setOverallScore(averageScore);
           }
         }
-        
+
         // Get dimension breakdown
         // Simplify dimension analysis - group scores by dimension across all connections
         const allDimensionScores: any = {};
-        
+
         if (currentUserEntry) {
           currentUserEntry.scores.forEach((connection: any) => {
             if (connection.dimension_scores && connection.score !== 100) { // exclude self
@@ -85,7 +101,7 @@ export default function Dashboard() {
             }
           });
         }
-        
+
         // Calculate average score for each dimension
         const dimensionBreakdown = Object.entries(allDimensionScores).map(([id, data]: [string, any]) => {
           const avgScore = Math.round(
@@ -97,11 +113,11 @@ export default function Dashboard() {
             score: avgScore
           };
         });
-        
+
         // Sort by score (highest first)
         dimensionBreakdown.sort((a, b) => b.score - a.score);
         setDimensionScores(dimensionBreakdown);
-        
+
         setLoading(false);
       } catch (err) {
         console.error("Error loading dashboard data:", err);
@@ -109,16 +125,16 @@ export default function Dashboard() {
         setLoading(false);
       }
     }
-    
+
     loadDashboardData();
   }, []);
-  
+
   // Extract recent assessments from assessmentsData when it's available
   useEffect(() => {
     if (assessmentsData && !assessmentsLoading) {
       // Transform assessments data into the format we need
       const assessments = assessmentsData.assessments || [];
-      
+
       const formattedAssessments = assessments
         .filter((assessment: any) => assessment.status !== "not_started")
         .map((assessment: any) => ({
@@ -136,20 +152,20 @@ export default function Dashboard() {
           return dateB - dateA;
         })
         .slice(0, 3); // Take only the 3 most recent
-      
+
       setRecentAssessments(formattedAssessments);
     }
   }, [assessmentsData, assessmentsLoading]);
-  
+
   // Handle combined loading states
   const isLoading = loading || assessmentsLoading || progressLoading;
-  
+
   // Handle combined errors
   const hasError = error || assessmentsError || progressError;
-  const errorMessage = error || 
-                      (assessmentsError ? "Failed to load assessments." : "") || 
-                      (progressError ? "Failed to load assessment progress." : "");
-  
+  const errorMessage = error ||
+    (assessmentsError ? "Failed to load assessments." : "") ||
+    (progressError ? "Failed to load assessment progress." : "");
+
   // Display loading state
   if (isLoading && (!assessmentsData && !topConnections.length)) {
     return (
@@ -165,7 +181,7 @@ export default function Dashboard() {
       </AppLayout>
     );
   }
-  
+
   // Display error state
   if (hasError && (!assessmentsData && !topConnections.length)) {
     return (
@@ -202,7 +218,7 @@ export default function Dashboard() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <ResumeAssessmentCard />
-          
+
           {/* Overall Compatibility Card */}
           <Card>
             <CardHeader className="pb-3">
@@ -319,7 +335,7 @@ export default function Dashboard() {
                       <Badge
                         variant={assessment.status === "completed" ? "default" : "secondary"}
                       >
-                        {assessment.status === "completed" ? "Completed" : 
+                        {assessment.status === "completed" ? "Completed" :
                           assessment.status === "in_progress" ? `${assessment.progress}%` : "Not Started"}
                       </Badge>
                     </div>
@@ -363,17 +379,16 @@ export default function Dashboard() {
                       </div>
                       <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full ${
-                            dimension.score >= 90
+                          className={`h-full rounded-full ${dimension.score >= 90
                               ? "bg-green-500"
                               : dimension.score >= 75
-                              ? "bg-green-400"
-                              : dimension.score >= 60
-                              ? "bg-yellow-400"
-                              : dimension.score >= 40
-                              ? "bg-orange-400"
-                              : "bg-red-500"
-                          }`}
+                                ? "bg-green-400"
+                                : dimension.score >= 60
+                                  ? "bg-yellow-400"
+                                  : dimension.score >= 40
+                                    ? "bg-orange-400"
+                                    : "bg-red-500"
+                            }`}
                           style={{ width: `${dimension.score}%` }}
                         />
                       </div>
@@ -419,8 +434,8 @@ export default function Dashboard() {
                     <div>
                       <h3 className="font-medium">Complete More Assessments</h3>
                       <p className="text-sm text-muted-foreground">
-                        {progressData ? 
-                          `You've completed ${progressData.completed_dimensions} out of ${progressData.total_dimensions} assessment dimensions.` : 
+                        {progressData ?
+                          `You've completed ${progressData.completed_dimensions} out of ${progressData.total_dimensions} assessment dimensions.` :
                           'Complete all assessments to get more accurate compatibility results.'}
                       </p>
                       <Button variant="link" className="h-8 p-0 mt-2" asChild>
@@ -477,7 +492,7 @@ export default function Dashboard() {
             </CardFooter>
           </Card>
         </div>
-        
+
         {/* Display top compatible matches if available */}
         {topConnections.length > 0 && (
           <>
@@ -493,16 +508,16 @@ export default function Dashboard() {
                     name: dim.name || dim.dimension_id,
                     score: dim.score
                   }))}
-                  strengths={connection.strengths?.map((s: any) => 
-                    s.description || `Strong ${s.name || s.dimension_id}` 
+                  strengths={connection.strengths?.map((s: any) =>
+                    s.description || `Strong ${s.name || s.dimension_id}`
                   )}
-                  challenges={connection.challenges?.map((c: any) => 
-                    c.description || `Different ${c.name || c.dimension_id}` 
+                  challenges={connection.challenges?.map((c: any) =>
+                    c.description || `Different ${c.name || c.dimension_id}`
                   )}
                 />
               ))}
             </div>
-            
+
             {topConnections.length > 3 && (
               <div className="flex justify-center mt-6">
                 <Button asChild variant="outline">

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import AuthService from "@/lib/auth-service";
-import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 interface GoogleAuthButtonProps {
   className?: string;
@@ -18,7 +18,6 @@ export function GoogleAuthButton({
   isLoading = false,
   text = "Sign in with Google"
 }: GoogleAuthButtonProps) {
-  const router = useRouter();
   const [localLoading, setLocalLoading] = React.useState(false);
   
   const loading = isLoading || localLoading;
@@ -28,27 +27,38 @@ export function GoogleAuthButton({
       setLocalLoading(true);
       const response = await AuthService.getGoogleAuthUrl();
       
-      console.log("Google auth response:", response);
+      console.log("Google auth response received");
       
       // Check if response exists
       if (response) {
         // Handle nested auth_url object with url property
         if (response.auth_url && response.auth_url.url) {
+          console.log("Redirecting to Google auth URL");
           window.location.href = response.auth_url.url;
           return;
         }
         
         // Alternative - check if auth_url itself is a string
         if (typeof response.auth_url === 'string') {
+          console.log("Redirecting to Google auth URL (string format)");
           window.location.href = response.auth_url;
+          return;
+        }
+        
+        // Additional check for url property directly in response
+        if (response.url) {
+          console.log("Redirecting to Google auth URL (direct url property)");
+          window.location.href = response.url;
           return;
         }
       }
       
       console.error("Invalid auth URL format:", response);
+      toast.error("Unable to initiate Google sign-in. Please try again later.");
       setLocalLoading(false);
     } catch (error) {
       console.error("Error initiating Google sign-in:", error);
+      toast.error("Failed to connect to Google. Please try again.");
       setLocalLoading(false);
     }
   };
@@ -67,7 +77,7 @@ export function GoogleAuthButton({
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          Loading...
+          Connecting...
         </span>
       ) : (
         <span className="flex items-center">

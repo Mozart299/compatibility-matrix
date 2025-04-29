@@ -1,4 +1,4 @@
-// src/middleware.ts
+
 import { NextRequest, NextResponse } from "next/server";
 
 // Define which routes require authentication
@@ -15,7 +15,15 @@ const protectedRoutes = [
 const authRoutes = ["/login", "/signup"];
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
+  
+  // Check if this is a Google OAuth callback (code in query params at root)
+  const code = searchParams.get('code');
+  if (pathname === '/' && code) {
+    console.log('Intercepting Google auth callback at root path');
+    // Redirect to our proper callback handler
+    return NextResponse.redirect(new URL(`/api/auth/callback/google?code=${code}`, request.url));
+  }
   
   // Get auth token from cookies
   const token = request.cookies.get("accessToken")?.value;
