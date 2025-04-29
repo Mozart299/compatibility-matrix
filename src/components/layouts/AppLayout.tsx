@@ -51,6 +51,9 @@ export function AppLayout({ children }: AppLayoutProps) {
               <Link href="/matrix" className="text-sm font-medium hover:text-primary">
                 Matrix
               </Link>
+              <Link href="/connections" className="text-sm font-medium hover:text-primary">
+                Connections
+              </Link>
               <Link href="/profile" className="text-sm font-medium hover:text-primary">
                 Profile
               </Link>
