@@ -135,7 +135,7 @@ export default function SignUpPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pr-10" // Prevent text overlap
+                  className="pr-10" 
                 />
                 <button
                   type="button"

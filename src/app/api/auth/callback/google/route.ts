@@ -1,4 +1,4 @@
-// src/app/api/auth/callback/google/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import AuthService from '@/lib/auth-service';
 
