@@ -1,28 +1,26 @@
 // src/lib/auth-service.ts
-import axios from "axios";
+import axios from 'axios';
 
 // Base URL from environment variable, with fallback
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
 // Configure axios with defaults
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
 });
 
 // Add interceptor to include auth token in requests
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Try to get tokens from storage
     let tokens;
     try {
-      tokens = JSON.parse(localStorage.getItem("authTokens") || sessionStorage.getItem("authTokens") || "{}");
+      tokens = JSON.parse(localStorage.getItem('authTokens') || sessionStorage.getItem('authTokens') || '{}');
     } catch (e) {
       tokens = {};
     }
-    
     const token = tokens.accessToken;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -37,61 +35,44 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-
-    // If error is 401 and we haven't tried to refresh token yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-
       try {
         let tokens;
         try {
-          tokens = JSON.parse(localStorage.getItem("authTokens") || sessionStorage.getItem("authTokens") || "{}");
+          tokens = JSON.parse(localStorage.getItem('authTokens') || sessionStorage.getItem('authTokens') || '{}');
         } catch (e) {
           tokens = {};
         }
-        
         const refreshToken = tokens.refreshToken;
-        if (!refreshToken) throw new Error("No refresh token available");
-
+        if (!refreshToken) throw new Error('No refresh token available');
         const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
           refresh_token: refreshToken,
         });
-
         const { access_token, refresh_token } = response.data;
-
-        // Store new tokens in the same storage as the original
-        const storage = localStorage.getItem("authTokens") ? localStorage : sessionStorage;
+        const storage = localStorage.getItem('authTokens') ? localStorage : sessionStorage;
         const newTokens = { accessToken: access_token, refreshToken: refresh_token };
-        storage.setItem("authTokens", JSON.stringify(newTokens));
-
-        // Set the new access token as a cookie
+        storage.setItem('authTokens', JSON.stringify(newTokens));
         document.cookie = `accessToken=${access_token}; path=/; secure; samesite=strict`;
-
-        // Retry the original request with new token
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        // If refresh fails, clear tokens and redirect to login
-        localStorage.removeItem("authTokens");
-        sessionStorage.removeItem("authTokens");
-        document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict";
-        window.location.href = "/login";
+        localStorage.removeItem('authTokens');
+        sessionStorage.removeItem('authTokens');
+        document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict';
+        window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }
-
     return Promise.reject(error);
   }
 );
 
 // Auth service API
 const AuthService = {
-  /**
-   * Register a new user
-   */
   register: async (email: string, password: string, name: string) => {
     try {
-      const response = await axiosInstance.post("/auth/register", {
+      const response = await axiosInstance.post('/auth/register', {
         email,
         password,
         name,
@@ -102,113 +83,83 @@ const AuthService = {
     }
   },
 
-  /**
-   * Login a user
-   */
   login: async (email: string, password: string, rememberMe: boolean) => {
     try {
-      // API expects username/password format for OAuth2 compatibility
       const formData = new FormData();
-      formData.append("username", email);
-      formData.append("password", password);
-      formData.append("grant_type", "password");
-      formData.append("scope", "");
-      formData.append("client_id", "string");
-      formData.append("client_secret", "string");
-
-      // Temporarily override Content-Type for this request
-      const response = await axiosInstance.post("/auth/login", formData, {
+      formData.append('username', email);
+      formData.append('password', password);
+      formData.append('grant_type', 'password');
+      formData.append('scope', '');
+      formData.append('client_id', 'string');
+      formData.append('client_secret', 'string');
+      const response = await axiosInstance.post('/auth/login', formData, {
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
-
-      // Store tokens in localStorage or sessionStorage based on rememberMe
       const storage = rememberMe ? localStorage : sessionStorage;
       const authTokens = {
         accessToken: response.data.access_token,
         refreshToken: response.data.refresh_token,
       };
-      storage.setItem("authTokens", JSON.stringify(authTokens));
-
-      // Set the access token as a cookie
+      storage.setItem('authTokens', JSON.stringify(authTokens));
       document.cookie = `accessToken=${response.data.access_token}; path=/; secure; samesite=strict`;
-
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;
     }
   },
 
-  /**
-   * Get Google authentication URL
-   */
   getGoogleAuthUrl: async () => {
     try {
-      const response = await axiosInstance.get("/auth/login/google");
+      const response = await axiosInstance.get('/auth/login/google');
       return response.data;
     } catch (error: any) {
-      console.error("Failed to get Google auth URL:", error);
+      console.error('Failed to get Google auth URL:', error);
       throw error.response?.data || error;
     }
   },
 
-  /**
-   * Handle Google authentication callback
-   */
   handleGoogleCallback: async (code: string) => {
     try {
       if (!code) {
-        throw new Error("No authentication code provided");
+        throw new Error('No authentication code provided');
       }
-      
-      // Send the code to your backend to complete the authentication
-      const response = await axiosInstance.post("/auth/callback/google", { code });
-      
-      // Store tokens in localStorage (Google auth typically means "remember me")
-      const authTokens = {
-        accessToken: response.data.access_token,
-        refreshToken: response.data.refresh_token,
-      };
-      localStorage.setItem("authTokens", JSON.stringify(authTokens));
-
-      // Set the access token as a cookie
-      document.cookie = `accessToken=${response.data.access_token}; path=/; secure; samesite=strict`;
-
-      return response.data;
+      // Call the Next.js API route with a GET request
+      const response = await fetch(`/api/auth/callback/google?code=${encodeURIComponent(code)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      const data = await response.json();
+      // Token storage is handled by the API route, but you can add it here if needed
+      return data;
     } catch (error: any) {
-      console.error("Google callback error:", error);
-      throw error.response?.data || error;
+      console.error('Google callback error:', error);
+     throw error.response?.data || error;
     }
   },
 
-  /**
-   * Logout the current user
-   */
   logout: async () => {
     try {
-      // Call logout endpoint to invalidate token on server
-      await axiosInstance.post("/auth/logout");
+      await axiosInstance.post('/auth/logout');
     } catch (error: any) {
-      console.error("Logout error:", error);
+      console.error('Logout error:', error);
     } finally {
-      // Remove tokens from storage
-      localStorage.removeItem("authTokens");
-      sessionStorage.removeItem("authTokens");
-      
-      // Clear the accessToken cookie
-      document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict";
+      localStorage.removeItem('authTokens');
+      sessionStorage.removeItem('authTokens');
+      document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict';
     }
   },
 
-  /**
-   * Check if user is authenticated
-   */
   isAuthenticated: () => {
     try {
-      const authTokensStr = localStorage.getItem("authTokens") || sessionStorage.getItem("authTokens");
+      const authTokensStr = localStorage.getItem('authTokens') || sessionStorage.getItem('authTokens');
       if (!authTokensStr) return false;
-      
       const authTokens = JSON.parse(authTokensStr);
       return !!authTokens.accessToken;
     } catch (e) {
@@ -216,24 +167,18 @@ const AuthService = {
     }
   },
 
-  /**
-   * Get current user profile
-   */
   getCurrentUser: async () => {
     try {
-      const response = await axiosInstance.get("/users/me");
+      const response = await axiosInstance.get('/users/me');
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;
     }
   },
 
-  /**
-   * Request password reset
-   */
   requestPasswordReset: async (email: string) => {
     try {
-      const response = await axiosInstance.post("/auth/send-reset-password", { email });
+      const response = await axiosInstance.post('/auth/send-reset-password', { email });
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;
