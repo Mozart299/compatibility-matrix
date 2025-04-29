@@ -9,12 +9,15 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton';
 import { AlertCircle } from 'lucide-react';
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
 
 export default function SignUpPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { register, isLoading, error: authError, clearError } = useAuth();
 
@@ -22,23 +25,23 @@ export default function SignUpPage() {
     e.preventDefault();
     setError(null);
     clearError();
-    
+
     // Basic validation
     if (!name || !email || !password || !confirmPassword) {
       setError('All fields are required');
       return;
     }
-    
+
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-    
+
     if (password.length < 8) {
       setError('Password must be at least 8 characters long');
       return;
     }
-    
+
     try {
       await register(email, password, name);
       // Redirect is handled in the auth context
@@ -121,19 +124,30 @@ export default function SignUpPage() {
                 />
               </div>
             </div>
-
             <div>
               <Label htmlFor="password">Password</Label>
-              <div className="mt-2">
+              <div className="mt-2 relative">
                 <Input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="pr-10" // Prevent text overlap
                 />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOffIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 Must be at least 8 characters
@@ -142,16 +156,28 @@ export default function SignUpPage() {
 
             <div>
               <Label htmlFor="confirm-password">Confirm Password</Label>
-              <div className="mt-2">
+              <div className="mt-2 relative">
                 <Input
                   id="confirm-password"
                   name="confirm-password"
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pr-10" // Prevent text overlap
                 />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOffIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
               </div>
             </div>
 
