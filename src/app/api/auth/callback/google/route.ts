@@ -25,11 +25,21 @@ export async function GET(request: NextRequest) {
 
     console.log('Received Google auth code:', code.substring(0, 10) + '...');
 
-    // Forward the code to your backend using form data as expected by the backend
+    // Retrieve the code_verifier from cookies
+    const codeVerifier = request.cookies.get('code_verifier')?.value;
+    if (!codeVerifier) {
+      console.error('No code verifier found in cookies');
+      return NextResponse.redirect(new URL('/login?error=missing_code_verifier', request.url));
+    }
+
+    // Forward the code and code_verifier to the backend using form data
     const formData = new FormData();
     formData.append('code', code);
-    
-    const response = await axios.post(`${API_BASE_URL}/auth/callback/google`, formData);
+    formData.append('code_verifier', codeVerifier);
+
+    const response = await axios.post(`${API_BASE_URL}/auth/callback/google`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
 
     if (!response.data || !response.data.access_token) {
       console.error('Invalid response from backend:', response.data);
@@ -38,26 +48,24 @@ export async function GET(request: NextRequest) {
 
     console.log('Successfully received tokens from backend');
 
-    // Create the redirect response first
+    // Create the redirect response
     const redirectResponse = NextResponse.redirect(new URL('/dashboard', request.url));
 
-    // Set tokens in localStorage via cookies
-    // Create a temporary cookie that will be read by client-side code
+    // Set tokens in cookies
     redirectResponse.cookies.set('googleAuthToken', response.data.access_token, {
       path: '/',
       secure: process.env.NODE_ENV === 'production',
-      httpOnly: false, // So client JS can read it
-      maxAge: 30, // Short-lived - just long enough for the client to read
-      sameSite: 'lax'
+      httpOnly: false, // Client-side readable
+      maxAge: 30, // Short-lived
+      sameSite: 'lax',
     });
 
-    // Also set the HTTP-only cookie for auth middleware
     redirectResponse.cookies.set('accessToken', response.data.access_token, {
       path: '/',
-      secure: process.env.NODE_ENV === 'production', 
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7 // 7 days
+      maxAge: 60 * 60 * 24 * 7, // 7 days
     });
 
     if (response.data.refresh_token) {
@@ -66,7 +74,7 @@ export async function GET(request: NextRequest) {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 30 // 30 days
+        maxAge: 60 * 60 * 24 * 30, // 30 days
       });
     }
 
@@ -76,7 +84,13 @@ export async function GET(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: false,
       maxAge: 30, // Short-lived
-      sameSite: 'lax'
+      sameSite: 'lax',
+    });
+
+    // Clear the code_verifier cookie to prevent reuse
+    redirectResponse.cookies.set('code_verifier', '', {
+      path: '/',
+      maxAge: 0, // Expire immediately
     });
 
     return redirectResponse;

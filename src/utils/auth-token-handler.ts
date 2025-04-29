@@ -1,12 +1,10 @@
-// src/utils/auth-token-handler.ts
+
 
 /**
  * Reads tokens from cookies and stores them in localStorage/sessionStorage
  * This is needed because the Google Auth callback can only set cookies,
  * but our app uses localStorage for token persistence
  * 
- * NOTE: Make sure this utility is imported and called in your dashboard or app layout component
- * to properly handle Google auth tokens when a user completes authentication.
  */
 export function handleAuthTokens(rememberMe: boolean = true): boolean {
     try {
