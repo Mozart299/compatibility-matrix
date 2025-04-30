@@ -1,3 +1,4 @@
+// src/components/auth/GoogleAuthButton.tsx
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import AuthService from "@/lib/auth-service";
@@ -9,6 +10,22 @@ interface GoogleAuthButtonProps {
   variant?: "default" | "outline" | "secondary" | "ghost" | "link" | "destructive";
   isLoading?: boolean;
   text?: string;
+}
+
+// Helper function to generate code verifier for PKCE
+function generateCodeVerifier() {
+  const array = new Uint8Array(32);
+  window.crypto.getRandomValues(array);
+  return Array.from(array, byte => String.fromCharCode(byte)).join('');
+}
+
+// Helper function to base64 URL encode a string
+function base64UrlEncode(str: string): string {
+  // Convert the string to base64
+  let encoded = btoa(str);
+  // Replace characters according to base64url specifications
+  encoded = encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  return encoded;
 }
 
 export function GoogleAuthButton({
@@ -25,30 +42,41 @@ export function GoogleAuthButton({
   const handleGoogleSignIn = async () => {
     try {
       setLocalLoading(true);
-      const response = await AuthService.getGoogleAuthUrl();
+      
+      // Generate and store code verifier for PKCE (Proof Key for Code Exchange)
+      const codeVerifier = base64UrlEncode(generateCodeVerifier());
+      
+      // Store the code verifier in localStorage to be used in the callback
+      localStorage.setItem('code_verifier', codeVerifier);
+      
+      // Set a cookie with the code verifier as well for redundancy
+      document.cookie = `code_verifier=${codeVerifier}; path=/; secure; samesite=lax; max-age=300`; // 5 minutes expiry
+      
+      // Get the Google auth URL from the backend
+      const response = await AuthService.getGoogleAuthUrl(codeVerifier);
       
       console.log("Google auth response received");
       
-      // Check if response exists
+      // Handle the auth URL from the response
       if (response) {
+        let redirectUrl = null;
+        
         // Handle nested auth_url object with url property
         if (response.auth_url && response.auth_url.url) {
-          console.log("Redirecting to Google auth URL");
-          window.location.href = response.auth_url.url;
-          return;
+          redirectUrl = response.auth_url.url;
         }
-        
         // Alternative - check if auth_url itself is a string
-        if (typeof response.auth_url === 'string') {
-          console.log("Redirecting to Google auth URL (string format)");
-          window.location.href = response.auth_url;
-          return;
+        else if (typeof response.auth_url === 'string') {
+          redirectUrl = response.auth_url;
+        }
+        // Additional check for url property directly in response
+        else if (response.url) {
+          redirectUrl = response.url;
         }
         
-        // Additional check for url property directly in response
-        if (response.url) {
-          console.log("Redirecting to Google auth URL (direct url property)");
-          window.location.href = response.url;
+        if (redirectUrl) {
+          console.log("Redirecting to Google auth URL: " + redirectUrl);
+          window.location.href = redirectUrl;
           return;
         }
       }

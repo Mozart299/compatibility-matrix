@@ -1,9 +1,9 @@
-
 "use client";
 
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from "sonner";
+import AuthService from '@/lib/auth-service';
 
 /**
  * This component handles Google OAuth callback parameters
@@ -14,6 +14,14 @@ export function GoogleAuthHandler() {
   const router = useRouter();
   
   useEffect(() => {
+    // Check if we have Google auth tokens in cookies and process them
+    const tokenProcessed = AuthService.processGoogleAuthTokens();
+    if (tokenProcessed) {
+      toast.success("Successfully signed in with Google!");
+      router.push('/dashboard');
+      return;
+    }
+    
     // Check for Google auth error
     const error = searchParams.get('error');
     if (error) {
@@ -30,6 +38,9 @@ export function GoogleAuthHandler() {
         case 'invalid_token':
           errorMessage = "Could not validate your authentication.";
           break;
+        case 'missing_code_verifier':
+          errorMessage = "Authentication verification failed. Please try again.";
+          break;
         case 'backend_no_response':
           errorMessage = "Our server is not responding. Please try again later.";
           break;
@@ -40,16 +51,33 @@ export function GoogleAuthHandler() {
           }
       }
       
-      toast(errorMessage);
+      toast.error(errorMessage);
     }
     
-    // Check for successful Google signup
-    const googleSuccess = searchParams.get('google_success');
-    if (googleSuccess === 'true') {
-      toast("You've successfully signed in with Google!");
+    // Check for successful Google signup via cookies
+    const cookies = document.cookie.split(';');
+    const authSuccessCookie = cookies.find(cookie => cookie.trim().startsWith('auth_success='));
+    
+    if (authSuccessCookie && authSuccessCookie.includes('true')) {
+      toast.success("You've successfully signed in with Google!");
+      
+      // Clear the success cookie
+      document.cookie = 'auth_success=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=lax';
     }
-  }, [searchParams, toast, router]);
+    
+    // Check for failed auth via cookies
+    const authFailedCookie = cookies.find(cookie => cookie.trim().startsWith('auth_failed='));
+    
+    if (authFailedCookie && authFailedCookie.includes('true')) {
+      toast.error("Authentication failed. Please try again.");
+      
+      // Clear the failed cookie
+      document.cookie = 'auth_failed=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=lax';
+    }
+  }, [searchParams, router]);
   
   // This component doesn't render anything
   return null;
 }
+
+export default GoogleAuthHandler;

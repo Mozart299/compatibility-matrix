@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Providers } from "./providers";
 import { Toaster } from "@/components/ui/sonner";
+import LayoutAuthHandler from "@/components/auth/LayoutHandler";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,6 +39,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <Providers>
+            <LayoutAuthHandler />
             {children}
             <Toaster/>
           </Providers>

@@ -110,9 +110,12 @@ const AuthService = {
     }
   },
 
-  getGoogleAuthUrl: async () => {
+  getGoogleAuthUrl: async (codeVerifier?: string) => {
     try {
-      const response = await axiosInstance.get('/auth/login/google');
+      // If a code verifier is provided, include it in the request
+      const params = codeVerifier ? { code_verifier: codeVerifier } : {};
+      
+      const response = await axiosInstance.get('/auth/login/google', { params });
       return response.data;
     } catch (error: any) {
       console.error('Failed to get Google auth URL:', error);
@@ -120,27 +123,35 @@ const AuthService = {
     }
   },
 
-  handleGoogleCallback: async (code: string) => {
+  handleGoogleCallback: async (code: string, codeVerifier?: string) => {
     try {
       if (!code) {
         throw new Error('No authentication code provided');
       }
-      // Call the Next.js API route with a GET request
+      
+      // Create the request data
+      const data: any = { code };
+      if (codeVerifier) {
+        data.code_verifier = codeVerifier;
+      }
+      
+      // Call the Next.js API route
       const response = await fetch(`/api/auth/callback/google?code=${encodeURIComponent(code)}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
+      
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
-      const data = await response.json();
-      // Token storage is handled by the API route, but you can add it here if needed
-      return data;
+      
+      const responseData = await response.json();
+      return responseData;
     } catch (error: any) {
       console.error('Google callback error:', error);
-     throw error.response?.data || error;
+      throw error.response?.data || error;
     }
   },
 
@@ -156,13 +167,58 @@ const AuthService = {
     }
   },
 
+  // Check if the user is authenticated by looking for tokens
   isAuthenticated: () => {
     try {
+      // First check for access token in cookies (for SSR)
+      const cookies = document.cookie.split(';');
+      const accessTokenCookie = cookies.find(cookie => cookie.trim().startsWith('accessToken='));
+      
+      if (accessTokenCookie) {
+        return true;
+      }
+      
+      // Then check localStorage/sessionStorage (for client-side)
       const authTokensStr = localStorage.getItem('authTokens') || sessionStorage.getItem('authTokens');
       if (!authTokensStr) return false;
       const authTokens = JSON.parse(authTokensStr);
       return !!authTokens.accessToken;
     } catch (e) {
+      return false;
+    }
+  },
+
+  // Add a method to check and handle Google Auth tokens from cookies
+  processGoogleAuthTokens: () => {
+    try {
+      // Check for the Google auth tokens in cookies
+      const cookies = document.cookie.split(';');
+      const googleAuthTokenCookie = cookies.find(cookie => cookie.trim().startsWith('googleAuthToken='));
+      
+      if (googleAuthTokenCookie) {
+        const googleAuthToken = googleAuthTokenCookie.split('=')[1];
+        
+        // Also get the refresh token if available
+        const refreshTokenCookie = cookies.find(cookie => cookie.trim().startsWith('refreshToken='));
+        const refreshToken = refreshTokenCookie ? refreshTokenCookie.split('=')[1] : null;
+        
+        // Store tokens in localStorage
+        const authTokens = {
+          accessToken: googleAuthToken,
+          refreshToken: refreshToken || '',
+        };
+        
+        localStorage.setItem('authTokens', JSON.stringify(authTokens));
+        
+        // Clear the cookies
+        document.cookie = 'googleAuthToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=lax';
+        
+        return true;
+      }
+      
+      return false;
+    } catch (e) {
+      console.error('Error processing Google auth tokens:', e);
       return false;
     }
   },
