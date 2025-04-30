@@ -11,16 +11,18 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const code = url.searchParams.get('code');
     const error = url.searchParams.get('error');
-
+    
     // Handle errors from Google's OAuth
     if (error) {
       console.error('Google OAuth error:', error);
-      return NextResponse.redirect(new URL(`/login?error=${error}`, request.url));
+      // FIX 1: Use origin from URL to construct proper redirect URL
+      return NextResponse.redirect(new URL(`/login?error=${error}`, url.origin));
     }
 
     if (!code) {
       console.error('No authorization code received from Google');
-      return NextResponse.redirect(new URL('/login?error=no_code', request.url));
+      // FIX 2: Use origin from URL to construct proper redirect URL
+      return NextResponse.redirect(new URL('/login?error=no_code', url.origin));
     }
 
     console.log('Received Google auth code:', code.substring(0, 10) + '...');
@@ -29,7 +31,8 @@ export async function GET(request: NextRequest) {
     const codeVerifier = request.cookies.get('code_verifier')?.value;
     if (!codeVerifier) {
       console.error('No code verifier found in cookies');
-      return NextResponse.redirect(new URL('/login?error=missing_code_verifier', request.url));
+      // FIX 3: Use origin from URL to construct proper redirect URL
+      return NextResponse.redirect(new URL('/login?error=missing_code_verifier', url.origin));
     }
 
     // Forward the code and code_verifier to the backend using form data
@@ -37,19 +40,24 @@ export async function GET(request: NextRequest) {
     formData.append('code', code);
     formData.append('code_verifier', codeVerifier);
 
-    const response = await axios.post(`${API_BASE_URL}/auth/callback/google`, formData, {
+    // FIX 4: Make sure your API_BASE_URL is correct and doesn't have trailing slashes that could cause issues
+    const apiUrl = `${API_BASE_URL.replace(/\/$/, '')}/auth/callback/google`;
+    console.log('Sending request to backend at:', apiUrl);
+    
+    const response = await axios.post(apiUrl, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
 
     if (!response.data || !response.data.access_token) {
       console.error('Invalid response from backend:', response.data);
-      return NextResponse.redirect(new URL('/login?error=invalid_token', request.url));
+      // FIX 5: Use origin from URL to construct proper redirect URL
+      return NextResponse.redirect(new URL('/login?error=invalid_token', url.origin));
     }
 
     console.log('Successfully received tokens from backend');
 
-    // Create the redirect response
-    const redirectResponse = NextResponse.redirect(new URL('/dashboard', request.url));
+    // FIX 6: Create the redirect response with proper URL construction
+    const redirectResponse = NextResponse.redirect(new URL('/dashboard', url.origin));
 
     // Set tokens in cookies
     redirectResponse.cookies.set('googleAuthToken', response.data.access_token, {
@@ -110,7 +118,8 @@ export async function GET(request: NextRequest) {
       errorMessage = 'request_setup_error';
     }
 
-    // Redirect to login page with specific error
-    return NextResponse.redirect(new URL(`/login?error=${errorMessage}`, request.url));
+    // FIX 7: Use origin from URL to construct proper redirect URL
+    const url = new URL(request.url);
+    return NextResponse.redirect(new URL(`/login?error=${errorMessage}`, url.origin));
   }
 }
