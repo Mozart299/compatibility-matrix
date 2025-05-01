@@ -382,10 +382,10 @@ processGoogleAuthTokens: () => {
       console.log("Access token cookie set for 7 days");
       
       // Clear the Google auth token cookie after a delay to avoid issues
-      setTimeout(() => {
-        document.cookie = 'googleAuthToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=lax';
-        console.log("Google auth token cookie cleared after processing");
-      }, 2000);
+      // setTimeout(() => {
+      //   document.cookie = 'googleAuthToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=lax';
+      //   console.log("Google auth token cookie cleared after processing");
+      // }, 2000);
       
       return true;
     }
