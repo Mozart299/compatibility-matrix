@@ -11,7 +11,7 @@ import { CompatibilityService, AssessmentService } from "@/lib/api-services";
 import Link from "next/link";
 import { useAssessments, useAssessmentProgress } from "@/hooks/useAssessments";
 import { CompatibilityCard } from "@/components/compatibility/compatibility-card";
-import { handleAuthTokens, checkAuthSuccess } from "@/utils/auth-token-handler";
+import { AuthTokenHandler } from "@/utils/auth-token-handler";
 import { toast } from "sonner";
 
 export default function Dashboard() {
@@ -28,20 +28,6 @@ export default function Dashboard() {
   // Use the assessment hooks
   const { data: assessmentsData, isLoading: assessmentsLoading, error: assessmentsError } = useAssessments();
   const { data: progressData, isLoading: progressLoading, error: progressError } = useAssessmentProgress();
-
-  // Handle Google auth callback on component mount
-  useEffect(() => {
-    // Check if we have tokens from Google auth
-    const tokenSaved = handleAuthTokens(true);
-    if (tokenSaved) {
-      toast.success("Successfully signed in with Google!");
-    }
-
-    // Check for general auth success
-    if (checkAuthSuccess()) {
-      toast.success("Authentication successful!");
-    }
-  }, []);
 
   // Load compatibility data on component mount
   useEffect(() => {
@@ -170,6 +156,7 @@ export default function Dashboard() {
   if (isLoading && (!assessmentsData && !topConnections.length)) {
     return (
       <AppLayout>
+        <AuthTokenHandler />
         <div className="container py-10">
           <div className="flex justify-center items-center min-h-[60vh]">
             <div className="flex flex-col items-center space-y-4">

@@ -52,6 +52,10 @@ export function GoogleAuthHandler() {
       }
       
       toast.error(errorMessage);
+      
+      // Clear any stored code verifiers since they failed
+      localStorage.removeItem('google_code_verifier');
+      document.cookie = 'code_verifier=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=lax';
     }
     
     // Check for successful Google signup via cookies
@@ -79,5 +83,3 @@ export function GoogleAuthHandler() {
   // This component doesn't render anything
   return null;
 }
-
-export default GoogleAuthHandler;

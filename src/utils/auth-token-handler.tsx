@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import GoogleAuthHandler from '@/components/auth/GoogleAuthHandler';
+import {GoogleAuthHandler} from '@/components/auth/GoogleAuthHandler';
 import AuthService from '@/lib/auth-service';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';

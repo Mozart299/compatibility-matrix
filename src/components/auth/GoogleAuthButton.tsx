@@ -1,8 +1,9 @@
-// src/components/auth/GoogleAuthButton.tsx
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import AuthService from "@/lib/auth-service";
 import { toast } from 'sonner';
+import { nanoid } from 'nanoid';
+import { createHash } from 'crypto';
 
 interface GoogleAuthButtonProps {
   className?: string;
@@ -14,18 +15,19 @@ interface GoogleAuthButtonProps {
 
 // Helper function to generate code verifier for PKCE
 function generateCodeVerifier() {
-  const array = new Uint8Array(32);
-  window.crypto.getRandomValues(array);
-  return Array.from(array, byte => String.fromCharCode(byte)).join('');
+  return nanoid(64);
 }
 
-// Helper function to base64 URL encode a string
-function base64UrlEncode(str: string): string {
-  // Convert the string to base64
-  let encoded = btoa(str);
-  // Replace characters according to base64url specifications
-  encoded = encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  return encoded;
+// Helper function to create code challenge from verifier
+function generateCodeChallenge(verifier: string) {
+  const hash = createHash('sha256')
+    .update(verifier)
+    .digest();
+  return Buffer.from(hash)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
 }
 
 export function GoogleAuthButton({
@@ -43,39 +45,30 @@ export function GoogleAuthButton({
     try {
       setLocalLoading(true);
       
-      // Generate and store code verifier for PKCE (Proof Key for Code Exchange)
-      const codeVerifier = base64UrlEncode(generateCodeVerifier());
+      const codeVerifier = generateCodeVerifier();
       
-      // Store the code verifier in localStorage to be used in the callback
-      localStorage.setItem('code_verifier', codeVerifier);
+      localStorage.setItem('google_code_verifier', codeVerifier);
+      document.cookie = `code_verifier=${codeVerifier}; path=/; max-age=600; secure; samesite=lax`;
       
-      // Set a cookie with the code verifier as well for redundancy
-      document.cookie = `code_verifier=${codeVerifier}; path=/; secure; samesite=lax; max-age=300`; // 5 minutes expiry
+      console.log("Code verifier generated:", codeVerifier.substring(0, 10) + '...');
       
-      // Get the Google auth URL from the backend
       const response = await AuthService.getGoogleAuthUrl(codeVerifier);
       
-      console.log("Google auth response received");
-      
-      // Handle the auth URL from the response
-      if (response) {
+      if (response && response.auth_url) {
         let redirectUrl = null;
         
-        // Handle nested auth_url object with url property
-        if (response.auth_url && response.auth_url.url) {
-          redirectUrl = response.auth_url.url;
-        }
-        // Alternative - check if auth_url itself is a string
-        else if (typeof response.auth_url === 'string') {
+        if (typeof response.auth_url === 'string') {
           redirectUrl = response.auth_url;
         }
-        // Additional check for url property directly in response
+        else if (response.auth_url && response.auth_url.url) {
+          redirectUrl = response.auth_url.url;
+        }
         else if (response.url) {
           redirectUrl = response.url;
         }
         
         if (redirectUrl) {
-          console.log("Redirecting to Google auth URL: " + redirectUrl);
+          console.log("Redirecting to Google auth URL");
           window.location.href = redirectUrl;
           return;
         }

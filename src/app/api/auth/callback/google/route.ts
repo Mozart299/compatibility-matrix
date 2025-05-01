@@ -15,32 +15,36 @@ export async function GET(request: NextRequest) {
     // Handle errors from Google's OAuth
     if (error) {
       console.error('Google OAuth error:', error);
-      // FIX 1: Use origin from URL to construct proper redirect URL
       return NextResponse.redirect(new URL(`/login?error=${error}`, url.origin));
     }
 
     if (!code) {
       console.error('No authorization code received from Google');
-      // FIX 2: Use origin from URL to construct proper redirect URL
       return NextResponse.redirect(new URL('/login?error=no_code', url.origin));
     }
 
     console.log('Received Google auth code:', code.substring(0, 10) + '...');
 
-    // Retrieve the code_verifier from cookies
-    const codeVerifier = request.cookies.get('code_verifier')?.value;
+    // Try to get code verifier from cookies first
+    let codeVerifier = request.cookies.get('code_verifier')?.value;
+    
+    // If not found in cookies, look in localStorage via a hidden field approach
+    // (this won't work directly, but we include this comment for clarity)
+    // In practice, the cookie should be set properly when initiating the flow
+    
     if (!codeVerifier) {
       console.error('No code verifier found in cookies');
-      // FIX 3: Use origin from URL to construct proper redirect URL
       return NextResponse.redirect(new URL('/login?error=missing_code_verifier', url.origin));
     }
 
-    // Forward the code and code_verifier to the backend using form data
+    console.log('Using code verifier from cookies:', codeVerifier.substring(0, 5) + '...');
+
+    // Create form data for the backend request
     const formData = new FormData();
     formData.append('code', code);
     formData.append('code_verifier', codeVerifier);
 
-    // FIX 4: Make sure your API_BASE_URL is correct and doesn't have trailing slashes that could cause issues
+    // Clean up the API URL to avoid issues with trailing slashes
     const apiUrl = `${API_BASE_URL.replace(/\/$/, '')}/auth/callback/google`;
     console.log('Sending request to backend at:', apiUrl);
     
@@ -50,13 +54,12 @@ export async function GET(request: NextRequest) {
 
     if (!response.data || !response.data.access_token) {
       console.error('Invalid response from backend:', response.data);
-      // FIX 5: Use origin from URL to construct proper redirect URL
       return NextResponse.redirect(new URL('/login?error=invalid_token', url.origin));
     }
 
     console.log('Successfully received tokens from backend');
 
-    // FIX 6: Create the redirect response with proper URL construction
+    // Create the redirect response
     const redirectResponse = NextResponse.redirect(new URL('/dashboard', url.origin));
 
     // Set tokens in cookies
@@ -118,7 +121,7 @@ export async function GET(request: NextRequest) {
       errorMessage = 'request_setup_error';
     }
 
-    // FIX 7: Use origin from URL to construct proper redirect URL
+    // Use origin from URL to construct proper redirect URL
     const url = new URL(request.url);
     return NextResponse.redirect(new URL(`/login?error=${errorMessage}`, url.origin));
   }
