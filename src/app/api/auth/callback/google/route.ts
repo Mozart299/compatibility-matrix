@@ -1,8 +1,9 @@
+// src/app/api/auth/callback/google/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
-// Get the backend API URL from environment variable
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+// Get the backend API URL from environment variable with proper fallback to absolute URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://random-maria-mozart299-46512b0e.koyeb.app/api/v1';
 
 export async function GET(request: NextRequest) {
   try {
@@ -39,8 +40,16 @@ export async function GET(request: NextRequest) {
     formData.append('code', code);
     formData.append('code_verifier', codeVerifier);
 
+    // Construct a proper absolute URL
+    // If API_BASE_URL is already absolute (contains http:// or https://), use it as is
+    // If it's relative (starts with /), prepend the current origin
+    let apiUrl = API_BASE_URL;
+    if (apiUrl.startsWith('/')) {
+      apiUrl = `${url.origin}${apiUrl}`;
+    }
+    
     // Clean up the API URL to avoid issues with trailing slashes
-    const apiUrl = `${API_BASE_URL.replace(/\/$/, '')}/auth/callback/google`;
+    apiUrl = `${apiUrl.replace(/\/$/, '')}/auth/callback/google`;
     console.log('Sending request to backend at:', apiUrl);
     
     const response = await axios.post(apiUrl, formData, {
