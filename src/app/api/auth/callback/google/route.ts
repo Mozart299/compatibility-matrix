@@ -2,15 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
-// Get the backend API URL using our helper function
-const getApiBaseUrl = () => {
-  // In development, ensure we're using the right URL
-  if (process.env.NODE_ENV === 'development') {
-    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-  }
-  // In production
-  return process.env.NEXT_PUBLIC_API_URL || 'https://random-maria-mozart299-46512b0e.koyeb.app/api/v1';
-};
+// Get the backend API URL from environment variable with proper fallback to absolute URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://random-maria-mozart299-46512b0e.koyeb.app/api/v1';
 
 export async function GET(request: NextRequest) {
   try {
@@ -47,16 +40,21 @@ export async function GET(request: NextRequest) {
     formData.append('code', code);
     formData.append('code_verifier', codeVerifier);
 
-    // Get the proper API URL
-    const apiBaseUrl = getApiBaseUrl();
-    
     // Construct a proper absolute URL
-    let apiUrl = `${apiBaseUrl.replace(/\/$/, '')}/auth/callback/google`;
+    // Make sure we have a valid API URL by checking if it's absolute or relative
+    let apiUrl;
+    if (API_BASE_URL.startsWith('http://') || API_BASE_URL.startsWith('https://')) {
+      // It's an absolute URL, use it directly
+      apiUrl = `${API_BASE_URL.replace(/\/$/, '')}/auth/callback/google`;
+    } else {
+      // It's a relative URL, prepend the current origin
+      apiUrl = `${url.origin}${API_BASE_URL.replace(/\/$/, '')}/auth/callback/google`;
+    }
+    
     console.log('Sending request to backend at:', apiUrl);
     
     const response = await axios.post(apiUrl, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
-      withCredentials: true // Important for CORS
     });
 
     if (!response.data || !response.data.access_token) {
@@ -69,12 +67,12 @@ export async function GET(request: NextRequest) {
     // Create the redirect response
     const redirectResponse = NextResponse.redirect(new URL('/dashboard', url.origin));
 
-    // Set tokens in cookies with SameSite and proper settings
+    // Set tokens in cookies - INCREASED LIFETIME TO 2 MINUTES for googleAuthToken
     redirectResponse.cookies.set('googleAuthToken', response.data.access_token, {
       path: '/',
       secure: process.env.NODE_ENV === 'production',
       httpOnly: false, // Client-side readable
-      maxAge: 120, // 2 minutes
+      maxAge: 120, // Increased to 2 minutes (120 seconds)
       sameSite: 'lax',
     });
 
