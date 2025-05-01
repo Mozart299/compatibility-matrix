@@ -1,18 +1,29 @@
 // src/lib/auth-service.ts
 import axios from 'axios';
 
+const getApiBaseUrl = () => {
+  // In development, ensure we're using the right URL
+  if (process.env.NODE_ENV === 'development') {
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+  }
+  // In production
+  return process.env.NEXT_PUBLIC_API_URL || 'https://random-maria-mozart299-46512b0e.koyeb.app/api/v1';
+};
+
 // Base URL from environment variable, with fallback
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
 // Check if we're running on the client or server
 const isClient = typeof window !== 'undefined';
 
-// Configure axios with defaults
+// Update the axios instance creation
 const axiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
+  // Important for CORS with credentials
+  withCredentials: true,
 });
 
 // Function to check if we're in a browser environment
@@ -329,60 +340,62 @@ const AuthService = {
     }
   },
 
-  // Add a method to check and handle Google Auth tokens from cookies
-  processGoogleAuthTokens: () => {
-    if (!isBrowser()) return false;
+// Add a method to check and handle Google Auth tokens from cookies
+processGoogleAuthTokens: () => {
+  if (!isBrowser()) return false;
+  
+  try {
+    // Check for the Google auth tokens in cookies
+    const cookies = document.cookie.split(';');
+    const googleAuthTokenCookie = cookies.find(cookie => cookie.trim().startsWith('googleAuthToken='));
     
-    try {
-      // Check for the Google auth tokens in cookies
-      const cookies = document.cookie.split(';');
-      const googleAuthTokenCookie = cookies.find(cookie => cookie.trim().startsWith('googleAuthToken='));
-      
-      if (googleAuthTokenCookie) {
-        const googleAuthToken = googleAuthTokenCookie.split('=')[1];
-        if (!googleAuthToken) {
-          console.error('Google auth token cookie exists but has no value');
-          return false;
-        }
-        
-        console.log("Processing Google auth token, length:", googleAuthToken.length);
-        
-        // Also get the refresh token if available
-        const refreshTokenCookie = cookies.find(cookie => cookie.trim().startsWith('refreshToken='));
-        const refreshToken = refreshTokenCookie ? refreshTokenCookie.split('=')[1] : null;
-        
-        // Store tokens in localStorage
-        const authTokens = {
-          accessToken: googleAuthToken,
-          refreshToken: refreshToken || '',
-        };
-        
-        localStorage.setItem('authTokens', JSON.stringify(authTokens));
-        console.log("Auth tokens stored in localStorage");
-        
-        // IMPORTANT: Set the authorization header for current axios instance
-        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${googleAuthToken}`;
-        console.log("Authorization header set for current axios instance");
-        
-        // Set access token cookie to ensure it's available for middleware
-        document.cookie = `accessToken=${googleAuthToken}; path=/; secure; samesite=strict; max-age=${60 * 60 * 24 * 7}`;
-        console.log("Access token cookie set for 7 days");
-        
-        // Clear the Google auth token cookie after a delay to avoid issues
-        setTimeout(() => {
-          document.cookie = 'googleAuthToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=lax';
-          console.log("Google auth token cookie cleared after processing");
-        }, 2000);
-        
-        return true;
+    if (googleAuthTokenCookie) {
+      const googleAuthToken = googleAuthTokenCookie.split('=')[1];
+      if (!googleAuthToken) {
+        console.error('Google auth token cookie exists but has no value');
+        return false;
       }
       
-      return false;
-    } catch (e) {
-      console.error('Error processing Google auth tokens:', e);
-      return false;
+      console.log("Processing Google auth token, length:", googleAuthToken.length);
+      
+      // Also get the refresh token if available
+      const refreshTokenCookie = cookies.find(cookie => cookie.trim().startsWith('refreshToken='));
+      const refreshToken = refreshTokenCookie ? refreshTokenCookie.split('=')[1] : null;
+      
+      // Store tokens in localStorage
+      const authTokens = {
+        accessToken: googleAuthToken,
+        refreshToken: refreshToken || '',
+      };
+      
+      localStorage.setItem('authTokens', JSON.stringify(authTokens));
+      console.log("Auth tokens stored in localStorage");
+      
+      // IMPORTANT: Set the authorization header for current axios instance
+      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${googleAuthToken}`;
+      console.log("Authorization header set for current axios instance");
+      
+      // Set access token cookie to ensure it's available for middleware
+      // Using correct SameSite and Secure settings for cross-origin
+      const isProduction = process.env.NODE_ENV === 'production';
+      document.cookie = `accessToken=${googleAuthToken}; path=/; secure=${isProduction}; samesite=lax; max-age=${60 * 60 * 24 * 7}`;
+      console.log("Access token cookie set for 7 days");
+      
+      // Clear the Google auth token cookie after a delay to avoid issues
+      setTimeout(() => {
+        document.cookie = 'googleAuthToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=lax';
+        console.log("Google auth token cookie cleared after processing");
+      }, 2000);
+      
+      return true;
     }
-  },
+    
+    return false;
+  } catch (e) {
+    console.error('Error processing Google auth tokens:', e);
+    return false;
+  }
+},
 
   getCurrentUser: async () => {
     try {
