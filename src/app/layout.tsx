@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { Providers } from "./providers";
 import { Toaster } from "@/components/ui/sonner";
 import LayoutAuthHandler from "@/components/auth/LayoutHandler";
+import { Suspense } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,9 +40,11 @@ export default function RootLayout({
       >
         <AuthProvider>
           <Providers>
-            <LayoutAuthHandler />
-            {children}
-            <Toaster/>
+            <Suspense fallback={<div>Loading...</div>}>
+              <LayoutAuthHandler />
+              {children}
+            </Suspense>
+            <Toaster />
           </Providers>
         </AuthProvider>
       </body>
