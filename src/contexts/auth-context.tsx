@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import AuthService from "@/lib/auth-service";
+import AuthService, { isBrowser } from "@/lib/auth-service";
 
 interface User {
   id: string;
@@ -34,11 +34,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearError = () => setError(null);
 
   useEffect(() => {
+    // Skip if not in browser
+    if (!isBrowser()) {
+      setIsLoading(false);
+      return;
+    }
+    
     const checkAuth = async () => {
       try {
         if (AuthService.isAuthenticated()) {
+          console.log("Auth check: User is authenticated, fetching user data");
           const userData = await AuthService.getCurrentUser();
           setUser(userData);
+          console.log("User data fetched successfully");
+        } else {
+          console.log("Auth check: User is not authenticated");
         }
       } catch (err) {
         console.error("Auth check failed:", err);

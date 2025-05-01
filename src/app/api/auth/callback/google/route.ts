@@ -1,4 +1,3 @@
-// src/app/api/auth/callback/google/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
@@ -27,10 +26,6 @@ export async function GET(request: NextRequest) {
 
     // Try to get code verifier from cookies first
     let codeVerifier = request.cookies.get('code_verifier')?.value;
-    
-    // If not found in cookies, look in localStorage via a hidden field approach
-    // (this won't work directly, but we include this comment for clarity)
-    // In practice, the cookie should be set properly when initiating the flow
     
     if (!codeVerifier) {
       console.error('No code verifier found in cookies');
@@ -62,12 +57,12 @@ export async function GET(request: NextRequest) {
     // Create the redirect response
     const redirectResponse = NextResponse.redirect(new URL('/dashboard', url.origin));
 
-    // Set tokens in cookies
+    // Set tokens in cookies - INCREASED LIFETIME TO 2 MINUTES for googleAuthToken
     redirectResponse.cookies.set('googleAuthToken', response.data.access_token, {
       path: '/',
       secure: process.env.NODE_ENV === 'production',
       httpOnly: false, // Client-side readable
-      maxAge: 30, // Short-lived
+      maxAge: 120, // Increased to 2 minutes (120 seconds)
       sameSite: 'lax',
     });
 

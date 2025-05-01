@@ -1,4 +1,4 @@
-
+// src/middleware.ts
 import { NextRequest, NextResponse } from "next/server";
 
 // Define which routes require authentication
@@ -17,6 +17,9 @@ const authRoutes = ["/login", "/signup"];
 export function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
   
+  // Debug info
+  console.log(`Middleware processing path: ${pathname}`);
+  
   // Check if this is a Google OAuth callback (code in query params at root)
   const code = searchParams.get('code');
   if (pathname === '/' && code) {
@@ -25,9 +28,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/api/auth/callback/google?code=${code}`, request.url));
   }
   
-  // Get auth token from cookies
-  const token = request.cookies.get("accessToken")?.value;
-  const isAuthenticated = !!token;
+  // Get auth token from cookies - try both accessToken and googleAuthToken
+  const accessToken = request.cookies.get("accessToken")?.value;
+  const googleAuthToken = request.cookies.get("googleAuthToken")?.value;
+  const isAuthenticated = !!accessToken || !!googleAuthToken;
+  
+  console.log(`Auth check for ${pathname}: authenticated=${isAuthenticated}, accessToken=${!!accessToken}, googleAuthToken=${!!googleAuthToken}`);
   
   // Check if the route requires authentication
   const isProtectedRoute = protectedRoutes.some(route => 
@@ -39,9 +45,20 @@ export function middleware(request: NextRequest) {
     pathname === route || pathname.startsWith(`${route}/`)
   );
   
+  // Special handling for root path
+  if (pathname === "/") {
+    // If authenticated, redirect to dashboard
+    if (isAuthenticated) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+    // Otherwise, let the homepage render normally
+    return NextResponse.next();
+  }
+  
   // Redirect logic
   if (isProtectedRoute && !isAuthenticated) {
     // Redirect to login if trying to access protected route without auth
+    console.log(`Redirecting from protected route ${pathname} to login (not authenticated)`);
     const url = new URL("/login", request.url);
     url.searchParams.set("from", pathname);
     return NextResponse.redirect(url);
@@ -49,10 +66,25 @@ export function middleware(request: NextRequest) {
   
   if (isAuthRoute && isAuthenticated) {
     // Redirect to dashboard if already authenticated and trying to access auth routes
+    console.log(`Redirecting from auth route ${pathname} to dashboard (already authenticated)`);
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
   
-  return NextResponse.next();
+  // Modify response to inject auth token if present in cookies
+  const response = NextResponse.next();
+  
+  // If we're using the googleAuthToken, we can optionally promote it to a proper accessToken
+  if (!accessToken && googleAuthToken && isAuthenticated) {
+    response.cookies.set('accessToken', googleAuthToken, {
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true, 
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24, // 1 day
+    });
+  }
+  
+  return response;
 }
 
 // Configure middleware to run only on specific paths

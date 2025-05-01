@@ -1,9 +1,10 @@
+// src/components/auth/GoogleAuthHandler.tsx
 "use client";
 
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from "sonner";
-import AuthService from '@/lib/auth-service';
+import AuthService, { initializeAuthHeaders, isBrowser } from '@/lib/auth-service';
 
 /**
  * This component handles Google OAuth callback parameters
@@ -14,15 +15,47 @@ export function GoogleAuthHandler() {
   const router = useRouter();
   
   useEffect(() => {
-    // Check if we have Google auth tokens in cookies and process them
-    const tokenProcessed = AuthService.processGoogleAuthTokens();
-    if (tokenProcessed) {
-      toast.success("Successfully signed in with Google!");
-      router.push('/dashboard');
-      return;
-    }
+    // Skip if not in browser
+    if (!isBrowser()) return;
     
-    // Check for Google auth error
+    // Initialize auth headers first
+    initializeAuthHeaders();
+    
+    // Check if we have Google auth tokens in cookies and process them
+    const handleGoogleAuth = () => {
+      // Log cookies for debugging
+      console.log("Cookies at GoogleAuthHandler:", document.cookie);
+      
+      const tokenProcessed = AuthService.processGoogleAuthTokens();
+      if (tokenProcessed) {
+        console.log("GoogleAuthHandler: Tokens processed successfully");
+        toast.success("Successfully signed in with Google!");
+        
+        // Verify auth is working properly by making a test API call
+        setTimeout(async () => {
+          try {
+            console.log("Testing authentication with API call");
+            await AuthService.getCurrentUser();
+            console.log("Auth check successful after Google login");
+            
+            // Navigate to dashboard after verifying auth works
+            router.push('/dashboard');
+          } catch (err) {
+            console.error("Auth check failed after Google login:", err);
+            toast.error("Authentication error. Please try again.");
+          }
+        }, 500);
+        
+        return true;
+      }
+      return false;
+    };
+    
+    // Process tokens first
+    const processed = handleGoogleAuth();
+    if (processed) return;
+    
+    // Then check for Google auth error
     const error = searchParams.get('error');
     if (error) {
       let errorMessage = "Authentication failed.";
@@ -54,29 +87,10 @@ export function GoogleAuthHandler() {
       toast.error(errorMessage);
       
       // Clear any stored code verifiers since they failed
-      localStorage.removeItem('google_code_verifier');
-      document.cookie = 'code_verifier=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=lax';
-    }
-    
-    // Check for successful Google signup via cookies
-    const cookies = document.cookie.split(';');
-    const authSuccessCookie = cookies.find(cookie => cookie.trim().startsWith('auth_success='));
-    
-    if (authSuccessCookie && authSuccessCookie.includes('true')) {
-      toast.success("You've successfully signed in with Google!");
-      
-      // Clear the success cookie
-      document.cookie = 'auth_success=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=lax';
-    }
-    
-    // Check for failed auth via cookies
-    const authFailedCookie = cookies.find(cookie => cookie.trim().startsWith('auth_failed='));
-    
-    if (authFailedCookie && authFailedCookie.includes('true')) {
-      toast.error("Authentication failed. Please try again.");
-      
-      // Clear the failed cookie
-      document.cookie = 'auth_failed=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=lax';
+      if (isBrowser()) {
+        localStorage.removeItem('google_code_verifier');
+        document.cookie = 'code_verifier=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=lax';
+      }
     }
   }, [searchParams, router]);
   
