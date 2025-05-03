@@ -31,21 +31,6 @@ export function GoogleAuthHandler() {
         console.log("GoogleAuthHandler: Tokens processed successfully");
         toast.success("Successfully signed in with Google!");
         
-        // Verify auth is working properly by making a test API call
-        setTimeout(async () => {
-          try {
-            console.log("Testing authentication with API call");
-            await AuthService.getCurrentUser();
-            console.log("Auth check successful after Google login");
-            
-            // Navigate to dashboard after verifying auth works
-            router.push('/dashboard');
-          } catch (err) {
-            console.error("Auth check failed after Google login:", err);
-            toast.error("Authentication error. Please try again.");
-          }
-        }, 500);
-        
         return true;
       }
       return false;

@@ -42,15 +42,6 @@ export function AuthTokenHandler() {
       if (tokenProcessed) {
         console.log("Google auth tokens processed successfully");
         
-        // Force a page reload after a small delay to ensure token is properly applied
-        if (foundToken) {
-          console.log("Will reload page to ensure token is applied correctly");
-          setTimeout(() => {
-            window.location.reload();
-          }, 500);
-          return;
-        }
-        
         // If we're already on the dashboard, don't redirect again
         const currentPath = window.location.pathname;
         if (currentPath !== '/dashboard') {
@@ -58,17 +49,6 @@ export function AuthTokenHandler() {
         }
       }
       
-      // Verify auth is working properly by making a test API call
-      try {
-        // Only do this if we should be authenticated
-        if (AuthService.isAuthenticated()) {
-          console.log("Testing authentication with API call to /users/me");
-          const userData = await AuthService.getCurrentUser();
-          console.log("Auth check successful:", userData ? "User data received" : "No user data");
-        }
-      } catch (err) {
-        console.error("Auth verification failed:", err);
-      }
     };
     
     // Run token processing immediately
