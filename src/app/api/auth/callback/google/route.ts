@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
 // Get the backend API URL from environment variable with proper fallback to absolute URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://random-maria-mozart299-46512b0e.koyeb.app/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://compatibility-matrix-api.onrender.com/api/v1';
 
 export async function GET(request: NextRequest) {
   try {

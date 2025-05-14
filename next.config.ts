@@ -24,11 +24,11 @@ const nextConfig = {
     return [
       {
         source: '/api/v1/:path*',
-        destination: 'https://random-maria-mozart299-46512b0e.koyeb.app/api/v1/:path*',
+        destination: 'https://compatibility-matrix-api.onrender.com/api/v1/:path*',
       },
       {
         source: '/google-auth/:path*',
-        destination: 'https://random-maria-mozart299-46512b0e.koyeb.app/api/v1/auth/:path*',
+        destination: 'https://compatibility-matrix-api.onrender.com/api/v1/auth/:path*',
       },
     ];
   },
