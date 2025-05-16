@@ -1,8 +1,6 @@
-
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useEffect } from "react";
-
 
 export default function LandingPage() {
   return (
@@ -39,7 +37,7 @@ export default function LandingPage() {
           </div>
         </div>
       </header>
-      
+
       <main className="flex-1">
         {/* Hero Section */}
         <section className="py-20 md:py-32">
@@ -51,7 +49,9 @@ export default function LandingPage() {
                   <span className="text-primary"> connections</span>
                 </h1>
                 <p className="text-lg text-muted-foreground">
-                  Our advanced compatibility matrix analyzes multiple dimensions of personality, values, and communication styles to help you build stronger relationships.
+                  Our advanced compatibility matrix analyzes multiple dimensions
+                  of personality, values, and communication styles to help you
+                  build stronger relationships.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Button size="lg" asChild>
@@ -101,9 +101,20 @@ export default function LandingPage() {
               {[
                 {
                   title: "Multidimensional Assessment",
-                  description: "Complete a scientifically designed assessment that measures personality traits, values, communication styles, and more.",
+                  description:
+                    "Complete a scientifically designed assessment that measures personality traits, values, communication styles, and more.",
                   icon: (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M16 6h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3"></path>
                       <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path>
                       <path d="M12 11h4"></path>
@@ -115,9 +126,20 @@ export default function LandingPage() {
                 },
                 {
                   title: "Compatibility Analysis",
-                  description: "Our algorithm analyzes compatibility across key dimensions, identifying areas of strength and potential challenges.",
+                  description:
+                    "Our algorithm analyzes compatibility across key dimensions, identifying areas of strength and potential challenges.",
                   icon: (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M3 3v18h18"></path>
                       <path d="m19 9-5 5-4-4-3 3"></path>
                     </svg>
@@ -125,10 +147,28 @@ export default function LandingPage() {
                 },
                 {
                   title: "Visual Matrix",
-                  description: "Explore compatibility results in an intuitive visual matrix, with detailed insights into each relationship dimension.",
+                  description:
+                    "Explore compatibility results in an intuitive visual matrix, with detailed insights into each relationship dimension.",
                   icon: (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect
+                        x="3"
+                        y="3"
+                        width="18"
+                        height="18"
+                        rx="2"
+                        ry="2"
+                      ></rect>
                       <rect x="7" y="7" width="3" height="3"></rect>
                       <rect x="14" y="7" width="3" height="3"></rect>
                       <rect x="7" y="14" width="3" height="3"></rect>
@@ -136,12 +176,38 @@ export default function LandingPage() {
                     </svg>
                   ),
                 },
+                {
+                  title: "Biometric Compatibility",
+                  description:
+                    "Our unique approach uses HRV analysis to provide objective physiological compatibility insights beyond self-reporting.",
+                  icon: (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"></path>
+                      <path d="M3.5 12h6l.5-1 .5 1h4l.5-1 .5 1h4"></path>
+                    </svg>
+                  ),
+                },
               ].map((feature, index) => (
-                <div key={index} className="flex flex-col items-center text-center p-6 bg-background rounded-lg shadow-sm">
+                <div
+                  key={index}
+                  className="flex flex-col items-center text-center p-6 bg-background rounded-lg shadow-sm"
+                >
                   <div className="h-12 w-12 flex items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
                     {feature.icon}
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                  <h3 className="text-xl font-semibold mb-2">
+                    {feature.title}
+                  </h3>
                   <p className="text-muted-foreground">{feature.description}</p>
                 </div>
               ))}
@@ -157,39 +223,52 @@ export default function LandingPage() {
                 What Our Users Say
               </h2>
               <p className="mt-4 text-lg text-muted-foreground">
-                Discover how the Compatibility Matrix has transformed relationships.
+                Discover how the Compatibility Matrix has transformed
+                relationships.
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[
                 {
-                  quote: "The compatibility insights completely changed how I understand my team dynamics. We've improved our collaboration significantly.",
+                  quote:
+                    "The compatibility insights completely changed how I understand my team dynamics. We've improved our collaboration significantly.",
                   author: "Sarah J.",
                   role: "Team Lead",
                 },
                 {
-                  quote: "I was skeptical at first, but the assessment was incredibly accurate. It helped me identify patterns in my relationships I hadn't recognized.",
+                  quote:
+                    "I was skeptical at first, but the assessment was incredibly accurate. It helped me identify patterns in my relationships I hadn't recognized.",
                   author: "Marcus T.",
                   role: "Business Consultant",
                 },
                 {
-                  quote: "Using the compatibility matrix for our team building was a game-changer. We now understand each other's communication styles much better.",
+                  quote:
+                    "Using the compatibility matrix for our team building was a game-changer. We now understand each other's communication styles much better.",
                   author: "Elena R.",
                   role: "HR Director",
                 },
               ].map((testimonial, index) => (
                 <div key={index} className="p-6 border rounded-lg">
-                  <svg className="h-6 w-6 text-muted-foreground mb-4" fill="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="h-6 w-6 text-muted-foreground mb-4"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
                   </svg>
                   <p className="mb-4">{testimonial.quote}</p>
                   <div className="flex items-center">
                     <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                      <span className="text-xs font-medium">{testimonial.author.split(' ')[0][0]}{testimonial.author.split(' ')[1][0]}</span>
+                      <span className="text-xs font-medium">
+                        {testimonial.author.split(" ")[0][0]}
+                        {testimonial.author.split(" ")[1][0]}
+                      </span>
                     </div>
                     <div className="ml-3">
                       <h4 className="font-medium">{testimonial.author}</h4>
-                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {testimonial.role}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -206,7 +285,8 @@ export default function LandingPage() {
                 Ready to discover deeper connections?
               </h2>
               <p className="text-lg mb-8">
-                Start your compatibility journey today and gain insights that transform your relationships.
+                Start your compatibility journey today and gain insights that
+                transform your relationships.
               </p>
               <Button size="lg" variant="secondary" asChild>
                 <Link href="/signup">Get Started</Link>
@@ -245,32 +325,103 @@ export default function LandingPage() {
             <div>
               <h4 className="font-medium mb-4">Product</h4>
               <ul className="space-y-2">
-                <li><Link href="/features" className="text-muted-foreground hover:text-foreground">Features</Link></li>
-                <li><Link href="/pricing" className="text-muted-foreground hover:text-foreground">Pricing</Link></li>
-                <li><Link href="/faq" className="text-muted-foreground hover:text-foreground">FAQ</Link></li>
+                <li>
+                  <Link
+                    href="/features"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Features
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/pricing"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Pricing
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/faq"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    FAQ
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="font-medium mb-4">Company</h4>
               <ul className="space-y-2">
-                <li><Link href="/about" className="text-muted-foreground hover:text-foreground">About Us</Link></li>
-                <li><Link href="/team" className="text-muted-foreground hover:text-foreground">Team</Link></li>
-                <li><Link href="/careers" className="text-muted-foreground hover:text-foreground">Careers</Link></li>
-                <li><Link href="/contact" className="text-muted-foreground hover:text-foreground">Contact</Link></li>
+                <li>
+                  <Link
+                    href="/about"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    About Us
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/team"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Team
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/careers"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Careers
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/contact"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Contact
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="font-medium mb-4">Legal</h4>
               <ul className="space-y-2">
-                <li><Link href="/privacy" className="text-muted-foreground hover:text-foreground">Privacy Policy</Link></li>
-                <li><Link href="/terms" className="text-muted-foreground hover:text-foreground">Terms of Service</Link></li>
-                <li><Link href="/cookies" className="text-muted-foreground hover:text-foreground">Cookie Policy</Link></li>
+                <li>
+                  <Link
+                    href="/privacy"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/terms"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Terms of Service
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/cookies"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Cookie Policy
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t">
             <p className="text-center text-muted-foreground">
-              &copy; {new Date().getFullYear()} Compatibility Matrix. All rights reserved.
+              &copy; {new Date().getFullYear()} Compatibility Matrix. All rights
+              reserved.
             </p>
           </div>
         </div>

@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { AlertCircle, Heart, Activity, ArrowRight } from "lucide-react";
 import { axiosInstance } from "@/lib/auth-service";
+import { BiometricsService } from '@/lib/api-services';
 
 export default function BiometricHRVCapture() {
   const [isCapturing, setIsCapturing] = useState(false);
@@ -27,25 +29,24 @@ export default function BiometricHRVCapture() {
     const fetchExistingData = async () => {
       try {
         setIsLoading(true);
-        // In a real implementation, this would call your API
-        // const response = await axiosInstance.get('/api/v1/biometrics/hrv');
+        const response = await BiometricsService.getHrvData();
         
-        // Mock data for demonstration
-        setTimeout(() => {
-          const hasMeasurement = Math.random() > 0.5;
-          if (hasMeasurement) {
-            const mockData = {
-              sdnn: Math.floor(Math.random() * 60) + 30,
-              rmssd: Math.floor(Math.random() * 40) + 20,
-              lf_hf_ratio: (Math.random() * 2) + 0.5,
-              created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-              hrvScore: Math.floor(Math.random() * 40) + 60
-            };
-            setExistingMeasurement(mockData);
-            setHrvScore(mockData.hrvScore);
-          }
-          setIsLoading(false);
-        }, 1000);
+        if (response.measurements && response.measurements.length > 0) {
+          const latestMeasurement = response.measurements[0];
+          const hrvData = latestMeasurement.measurement_value;
+          
+          setExistingMeasurement({
+            sdnn: hrvData.sdnn,
+            rmssd: hrvData.rmssd,
+            lf_hf_ratio: hrvData.lf_hf_ratio,
+            hrvScore: hrvData.hrv_score,
+            created_at: latestMeasurement.created_at
+          });
+          
+          setHrvScore(hrvData.hrv_score);
+        }
+        
+        setIsLoading(false);
       } catch (err) {
         console.error("Failed to fetch existing HRV data:", err);
         setIsLoading(false);
@@ -322,11 +323,11 @@ export default function BiometricHRVCapture() {
   // Save HRV score to the user's profile
   const saveHrvScore = async (data: any) => {
     try {
-      // In the actual implementation, this would call your API
-      console.log("Saving HRV data:", data);
-      // await axiosInstance.post('/api/v1/biometrics/hrv', data);
+      await BiometricsService.saveHrvMeasurement(data);
+      toast.success("HRV measurement saved successfully!");
     } catch (err) {
       console.error("Failed to save HRV data:", err);
+      toast.error("Failed to save measurement. Please try again.");
     }
   };
   

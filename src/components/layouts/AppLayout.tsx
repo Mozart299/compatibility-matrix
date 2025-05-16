@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { UserButton } from '../ui/user-button';
-import { Menu, X } from 'lucide-react';
-import { Button } from '../ui/button';
+import React, { useState } from "react";
+import Link from "next/link";
+import { UserButton } from "../ui/user-button";
+import { Menu, X } from "lucide-react";
+import { Button } from "../ui/button";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -42,26 +42,47 @@ export function AppLayout({ children }: AppLayoutProps) {
               <span className="sm:hidden">Matrix</span>
             </Link>
             <nav className="hidden md:flex gap-6">
-              <Link href="/dashboard" className="text-sm font-medium hover:text-primary">
+              <Link
+                href="/dashboard"
+                className="text-sm font-medium hover:text-primary"
+              >
                 Dashboard
               </Link>
-              <Link href="/assessment" className="text-sm font-medium hover:text-primary">
+              <Link
+                href="/assessment"
+                className="text-sm font-medium hover:text-primary"
+              >
                 Assessment
               </Link>
-              <Link href="/matrix" className="text-sm font-medium hover:text-primary">
+              <Link
+                href="/matrix"
+                className="text-sm font-medium hover:text-primary"
+              >
                 Matrix
               </Link>
-              <Link href="/connections" className="text-sm font-medium hover:text-primary">
+              <Link
+                href="/connections"
+                className="text-sm font-medium hover:text-primary"
+              >
                 Connections
               </Link>
-              <Link href="/profile" className="text-sm font-medium hover:text-primary">
+              <Link
+                href="/profile"
+                className="text-sm font-medium hover:text-primary"
+              >
                 Profile
+              </Link>
+              <Link
+                href="/biometrics"
+                className="text-sm font-medium hover:text-primary"
+              >
+                Biometrics
               </Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">
             <UserButton />
-            <button 
+            <button
               className="md:hidden p-2 rounded-md hover:bg-gray-100"
               onClick={toggleMobileMenu}
               aria-label="Toggle menu"
@@ -70,34 +91,34 @@ export function AppLayout({ children }: AppLayoutProps) {
             </button>
           </div>
         </div>
-        
+
         {/* Mobile menu */}
         {mobileMenuOpen && (
           <div className="md:hidden py-2 px-4 border-t">
             <nav className="flex flex-col space-y-3 py-3">
-              <Link 
-                href="/dashboard" 
+              <Link
+                href="/dashboard"
                 className="text-sm font-medium hover:text-primary py-2 px-3 rounded-md hover:bg-gray-100"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Dashboard
               </Link>
-              <Link 
-                href="/assessment" 
+              <Link
+                href="/assessment"
                 className="text-sm font-medium hover:text-primary py-2 px-3 rounded-md hover:bg-gray-100"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Assessment
               </Link>
-              <Link 
-                href="/matrix" 
+              <Link
+                href="/matrix"
                 className="text-sm font-medium hover:text-primary py-2 px-3 rounded-md hover:bg-gray-100"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Matrix
               </Link>
-              <Link 
-                href="/profile" 
+              <Link
+                href="/profile"
                 className="text-sm font-medium hover:text-primary py-2 px-3 rounded-md hover:bg-gray-100"
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -107,24 +128,32 @@ export function AppLayout({ children }: AppLayoutProps) {
           </div>
         )}
       </header>
-      
-      <main className="flex-1">
-        {children}
-      </main>
-      
+
+      <main className="flex-1">{children}</main>
+
       <footer className="border-t py-6">
         <div className="container flex flex-col items-center justify-between gap-4 md:flex-row text-center md:text-left">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Compatibility Matrix. All rights reserved.
+            &copy; {new Date().getFullYear()} Compatibility Matrix. All rights
+            reserved.
           </p>
           <nav className="flex gap-4 flex-wrap justify-center">
-            <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground">
+            <Link
+              href="/privacy"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
               Privacy
             </Link>
-            <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground">
+            <Link
+              href="/terms"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
               Terms
             </Link>
-            <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground">
+            <Link
+              href="/contact"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
               Contact
             </Link>
           </nav>
