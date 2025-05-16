@@ -124,6 +124,20 @@ export function AppLayout({ children }: AppLayoutProps) {
               >
                 Profile
               </Link>
+              <Link
+                href="/connections"
+                className="text-sm font-medium hover:text-primary py-2 px-3 rounded-md hover:bg-gray-100"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Connections
+              </Link>
+              <Link
+                href="/biometrics"
+                className="text-sm font-medium hover:text-primary py-2 px-3 rounded-md hover:bg-gray-100"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Biometrics
+              </Link>
             </nav>
           </div>
         )}
