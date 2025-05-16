@@ -7,7 +7,7 @@ const getApiBaseUrl = () => {
     return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
   }
   // In production
-  return process.env.NEXT_PUBLIC_API_URL || 'https://random-maria-mozart299-46512b0e.koyeb.app/api/v1';
+  return process.env.NEXT_PUBLIC_API_URL || 'https://compatibility-matrix-api.onrender.com/api/v1';
 };
 
 // Base URL from environment variable, with fallback

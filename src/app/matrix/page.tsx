@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layouts/AppLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -14,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader, AlertCircle } from "lucide-react";
+import { Loader, AlertCircle, Activity } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CompatibilityService, AssessmentService } from "@/lib/api-services";
 
@@ -41,27 +47,27 @@ export default function MatrixPage() {
     id: string;
     name: string;
   }
-  
+
   const [dimensions, setDimensions] = useState<Dimension[]>([]);
   const [activeTab, setActiveTab] = useState("overall");
   const [searchQuery, setSearchQuery] = useState("");
   const [thresholdFilter, setThresholdFilter] = useState("0");
-  
+
   // Load matrix and dimension data
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Load dimensions first
         const dimensionsData = await AssessmentService.getDimensions();
         setDimensions(dimensionsData);
-        
+
         // Load initial matrix data (overall compatibility)
         const matrix = await CompatibilityService.getMatrix();
         setMatrixData(matrix);
-        
+
         setLoading(false);
       } catch (err) {
         console.error("Error loading compatibility data:", err);
@@ -69,36 +75,39 @@ export default function MatrixPage() {
         setLoading(false);
       }
     }
-    
+
     loadData();
   }, []);
-  
+
   // Handle tab change (overall or dimension-specific)
   const handleTabChange = async (tab: string) => {
     try {
       setActiveTab(tab);
       setLoading(true);
-      
+
       // If "overall", get full matrix, otherwise filter by dimension
       if (tab === "overall") {
         const matrix = await CompatibilityService.getMatrix(
-          null, 
+          null,
           thresholdFilter !== "0" ? parseInt(thresholdFilter) : null
         );
         setMatrixData(matrix);
       } else {
         // Find dimension ID based on the tab value
-        const dimension = dimensions.find(d => d.id === tab || d.name.toLowerCase().replace(/\s+/g, '') === tab);
-        
+        const dimension = dimensions.find(
+          (d) =>
+            d.id === tab || d.name.toLowerCase().replace(/\s+/g, "") === tab
+        );
+
         if (dimension) {
           const matrix = await CompatibilityService.getMatrix(
-            dimension.id, 
+            dimension.id,
             thresholdFilter !== "0" ? parseInt(thresholdFilter) : null
           );
           setMatrixData(matrix);
         }
       }
-      
+
       setLoading(false);
     } catch (err) {
       console.error("Error loading compatibility data for tab:", err);
@@ -106,33 +115,37 @@ export default function MatrixPage() {
       setLoading(false);
     }
   };
-  
+
   // Handle threshold filter change
   const handleThresholdChange = async (value: string) => {
     try {
       setThresholdFilter(value);
       setLoading(true);
-      
+
       // Re-fetch matrix with new threshold
       if (activeTab === "overall") {
         const matrix = await CompatibilityService.getMatrix(
-          null, 
+          null,
           value !== "0" ? parseInt(value) : null
         );
         setMatrixData(matrix);
       } else {
         // Find dimension ID based on the active tab
-        const dimension = dimensions.find(d => d.id === activeTab || d.name.toLowerCase().replace(/\s+/g, '') === activeTab);
-        
+        const dimension = dimensions.find(
+          (d) =>
+            d.id === activeTab ||
+            d.name.toLowerCase().replace(/\s+/g, "") === activeTab
+        );
+
         if (dimension) {
           const matrix = await CompatibilityService.getMatrix(
-            dimension.id, 
+            dimension.id,
             value !== "0" ? parseInt(value) : null
           );
           setMatrixData(matrix);
         }
       }
-      
+
       setLoading(false);
     } catch (err) {
       console.error("Error applying threshold filter:", err);
@@ -140,19 +153,19 @@ export default function MatrixPage() {
       setLoading(false);
     }
   };
-  
+
   // Helper function to filter matrix data by search query
   const getFilteredMatrix = () => {
     if (!matrixData || !matrixData.matrix) return [];
-    
+
     if (!searchQuery) return matrixData.matrix;
-    
+
     // Filter matrix rows by name
-    return matrixData.matrix.filter(user => 
+    return matrixData.matrix.filter((user) =>
       user.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   };
-  
+
   // Helper function to get color based on compatibility score
   const getColorForScore = (score: number | null): string => {
     if (!score && score !== 0) return "bg-gray-200"; // No data
@@ -169,7 +182,7 @@ export default function MatrixPage() {
     if (score >= 45) return "text-gray-900";
     return "text-white";
   };
-  
+
   // Display loading state
   if (loading && !matrixData) {
     return (
@@ -178,14 +191,16 @@ export default function MatrixPage() {
           <div className="flex justify-center items-center min-h-[60vh]">
             <div className="flex flex-col items-center space-y-4">
               <Loader className="h-8 w-8 animate-spin" />
-              <p className="text-muted-foreground">Loading compatibility data...</p>
+              <p className="text-muted-foreground">
+                Loading compatibility data...
+              </p>
             </div>
           </div>
         </div>
       </AppLayout>
     );
   }
-  
+
   // Display error state
   if (error && !matrixData) {
     return (
@@ -213,7 +228,9 @@ export default function MatrixPage() {
       <div className="container py-10">
         <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4 justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Compatibility Matrix</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Compatibility Matrix
+            </h1>
             <p className="text-muted-foreground">
               Explore compatibility relationships across different dimensions.
             </p>
@@ -221,10 +238,10 @@ export default function MatrixPage() {
           <div className="flex items-center space-x-2">
             <div className="grid w-full max-w-sm items-center gap-1.5">
               <Label htmlFor="search">Search</Label>
-              <Input 
-                type="search" 
-                id="search" 
-                placeholder="Search by name..." 
+              <Input
+                type="search"
+                id="search"
+                placeholder="Search by name..."
                 className="w-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -233,21 +250,34 @@ export default function MatrixPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="overall" value={activeTab} onValueChange={handleTabChange} className="mt-8">
+        <Tabs
+          defaultValue="overall"
+          value={activeTab}
+          onValueChange={handleTabChange}
+          className="mt-8"
+        >
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
             <TabsList>
               <TabsTrigger value="overall">Overall</TabsTrigger>
-              {dimensions.map(dimension => (
-                <TabsTrigger 
-                  key={dimension.id} 
-                  value={dimension.id}
-                >
+              {dimensions.map((dimension) => (
+                <TabsTrigger key={dimension.id} value={dimension.id}>
                   {dimension.name}
                 </TabsTrigger>
               ))}
+              {/* Add biometrics dimension tab */}
+              <TabsTrigger
+                value="biometric"
+                className="flex items-center gap-1"
+              >
+                <Activity className="h-4 w-4" />
+                <span>Biometrics</span>
+              </TabsTrigger>
             </TabsList>
             <div className="mt-4 md:mt-0">
-              <Select value={thresholdFilter} onValueChange={handleThresholdChange}>
+              <Select
+                value={thresholdFilter}
+                onValueChange={handleThresholdChange}
+              >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Highlight threshold" />
                 </SelectTrigger>
@@ -265,14 +295,20 @@ export default function MatrixPage() {
             <Card>
               <CardHeader>
                 <CardTitle>
-                  {activeTab === "overall" 
-                    ? "Overall Compatibility Matrix" 
-                    : `${dimensions.find(d => d.id === activeTab)?.name || "Dimension"} Compatibility`}
+                  {activeTab === "overall"
+                    ? "Overall Compatibility Matrix"
+                    : `${
+                        dimensions.find((d) => d.id === activeTab)?.name ||
+                        "Dimension"
+                      } Compatibility`}
                 </CardTitle>
                 <CardDescription>
                   {activeTab === "overall"
                     ? "Combined compatibility across all dimensions"
-                    : `Compatibility based on ${dimensions.find(d => d.id === activeTab)?.name || "this dimension"} only`}
+                    : `Compatibility based on ${
+                        dimensions.find((d) => d.id === activeTab)?.name ||
+                        "this dimension"
+                      } only`}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -280,13 +316,19 @@ export default function MatrixPage() {
                   <div className="flex items-center justify-center h-40">
                     <div className="flex flex-col items-center space-y-4">
                       <Loader className="h-6 w-6 animate-spin" />
-                      <p className="text-sm text-muted-foreground">Updating compatibility data...</p>
+                      <p className="text-sm text-muted-foreground">
+                        Updating compatibility data...
+                      </p>
                     </div>
                   </div>
                 ) : filteredMatrix.length === 0 ? (
                   <div className="text-center py-10">
-                    <p className="text-muted-foreground">No compatibility data available or no matching results.</p>
-                    <p className="text-sm text-muted-foreground mt-2">Complete more assessments to see compatibility data.</p>
+                    <p className="text-muted-foreground">
+                      No compatibility data available or no matching results.
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Complete more assessments to see compatibility data.
+                    </p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -295,14 +337,25 @@ export default function MatrixPage() {
                         <tr>
                           <th className="p-3 text-left font-medium text-muted-foreground"></th>
                           {filteredMatrix.map((person) => (
-                            <th key={person.user_id} className="p-3 text-left font-medium">
+                            <th
+                              key={person.user_id}
+                              className="p-3 text-left font-medium"
+                            >
                               <div className="flex flex-col items-center">
                                 <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-1">
                                   <span className="text-xs font-medium">
-                                    {person.name === "You" ? "You" : `${person.name.split(' ')[0][0]}${person.name.split(' ').length > 1 ? person.name.split(' ')[1][0] : ''}`}
+                                    {person.name === "You"
+                                      ? "You"
+                                      : `${person.name.split(" ")[0][0]}${
+                                          person.name.split(" ").length > 1
+                                            ? person.name.split(" ")[1][0]
+                                            : ""
+                                        }`}
                                   </span>
                                 </div>
-                                <span className="text-sm whitespace-nowrap">{person.name}</span>
+                                <span className="text-sm whitespace-nowrap">
+                                  {person.name}
+                                </span>
                               </div>
                             </th>
                           ))}
@@ -315,7 +368,13 @@ export default function MatrixPage() {
                               <div className="flex items-center gap-2">
                                 <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
                                   <span className="text-xs font-medium">
-                                    {person1.name === "You" ? "You" : `${person1.name.split(' ')[0][0]}${person1.name.split(' ').length > 1 ? person1.name.split(' ')[1][0] : ''}`}
+                                    {person1.name === "You"
+                                      ? "You"
+                                      : `${person1.name.split(" ")[0][0]}${
+                                          person1.name.split(" ").length > 1
+                                            ? person1.name.split(" ")[1][0]
+                                            : ""
+                                        }`}
                                   </span>
                                 </div>
                                 <span>{person1.name}</span>
@@ -323,9 +382,11 @@ export default function MatrixPage() {
                             </td>
                             {filteredMatrix.map((person2) => {
                               // Find the score between these two users
-                              const scoreObj = person1.scores.find(s => s.user_id === person2.user_id);
+                              const scoreObj = person1.scores.find(
+                                (s) => s.user_id === person2.user_id
+                              );
                               const score = scoreObj ? scoreObj.score : null;
-                              
+
                               return (
                                 <td
                                   key={person2.user_id}
@@ -333,9 +394,11 @@ export default function MatrixPage() {
                                 >
                                   <div className="flex justify-center">
                                     <div
-                                      className={`h-10 w-10 rounded-full flex items-center justify-center ${getColorForScore(score)} ${getTextColorForScore(score)}`}
+                                      className={`h-10 w-10 rounded-full flex items-center justify-center ${getColorForScore(
+                                        score
+                                      )} ${getTextColorForScore(score)}`}
                                     >
-                                      {score !== null ? score : '-'}
+                                      {score !== null ? score : "-"}
                                     </div>
                                   </div>
                                 </td>
