@@ -211,7 +211,9 @@ export default function AssessmentPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {assessments.map((dimension: Dimension) => (
+              {assessments
+              .filter((dimension: Dimension) => dimension.dimension_id !== 'biometric')
+              .map((dimension: Dimension) => (
                 <DimensionCard
                   key={dimension.dimension_id}
                   dimension={dimension}
