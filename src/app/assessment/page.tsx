@@ -212,7 +212,7 @@ export default function AssessmentPage() {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {assessments
-              .filter((dimension: Dimension) => dimension.dimension_id !== 'biometric')
+              .filter((dimension: Dimension) => dimension.dimension_name !== 'Physiological Compatibility')
               .map((dimension: Dimension) => (
                 <DimensionCard
                   key={dimension.dimension_id}
