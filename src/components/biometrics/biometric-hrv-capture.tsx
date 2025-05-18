@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { AlertCircle, Heart, Activity, ArrowRight, Smartphone } from "lucide-react";
-import { BiometricsService } from '@/lib/api-services';
+import { BiometricsService, CompatibilityService } from '@/lib/api-services';
 
 export default function BiometricHRVCapture() {
   const [isCapturing, setIsCapturing] = useState(false);
@@ -362,7 +362,36 @@ export default function BiometricHRVCapture() {
   // Save HRV score to the user's profile
   const saveHrvScore = async (data: any) => {
     try {
+      // Add more detailed logging
+      console.log("Saving HRV measurement data:", data);
+      
+      // Make the API call
       await BiometricsService.saveHrvMeasurement(data);
+      
+      // Update existing measurement state
+      setExistingMeasurement({
+        ...data,
+        created_at: new Date().toISOString()
+      });
+      
+      // Force refresh of compatibility data by triggering a compatibility matrix refresh
+      // This helps ensure the UI shows updated compatibility with the new biometric data
+      try {
+        // Refresh compatibility matrix to reflect new biometric dimension
+        const refreshedMatrix = await CompatibilityService.getMatrix();
+        console.log("Updated compatibility matrix with new biometric data:", refreshedMatrix);
+        
+        // You could dispatch an event or use a shared state management system
+        // to notify other components about the updated compatibility
+        if (window.dispatchEvent) {
+          window.dispatchEvent(new CustomEvent('biometric-compatibility-updated', {
+            detail: { timestamp: new Date().getTime() }
+          }));
+        }
+      } catch (refreshErr) {
+        console.error("Error refreshing compatibility after biometric update:", refreshErr);
+      }
+      
       toast.success("HRV measurement saved successfully!");
     } catch (err) {
       console.error("Failed to save HRV data:", err);

@@ -264,7 +264,6 @@ export const ConnectionsService = {
   },
 };
 
-// 5. Add a BiometricsService to src/lib/api-services.ts
 export const BiometricsService = {
   // Get current user's HRV measurement
   getHrvData: async () => {
@@ -273,18 +272,57 @@ export const BiometricsService = {
       return response.data;
     } catch (error) {
       console.error("Error fetching HRV data:", error);
-      throw error;
+      // Return a standardized empty response instead of throwing
+      return { measurements: [] };
     }
   },
 
-  // Save HRV measurement
+  // Save HRV measurement with improved error handling
   saveHrvMeasurement: async (data: any) => {
     try {
+      console.log("Sending HRV measurement to API:", data);
       const response = await axiosInstance.post("/biometrics/hrv", data);
+      console.log("HRV measurement save response:", response.data);
+      
+      // If successful, try to trigger compatibility recalculation
+      try {
+        // Wait briefly for backend processing to complete
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Fetch updated biometric compatibility data
+        const matrix = await axiosInstance.get("/compatibility/matrix");
+        console.log("Fetched updated compatibility matrix after biometric save");
+      } catch (refreshError) {
+        console.error("Non-critical error refreshing compatibility after HRV save:", refreshError);
+      }
+      
       return response.data;
     } catch (error) {
       console.error("Error saving HRV measurement:", error);
       throw error;
+    }
+  },
+  
+  // Get biometric compatibility with enhanced logging and error handling
+  getBiometricCompatibility: async (userId: string) => {
+    try {
+      console.log(`Fetching biometric compatibility with user: ${userId}`);
+      const response = await axiosInstance.get(`/biometrics/compatibility/${userId}`);
+      console.log("Biometric compatibility response:", response.data);
+      return response.data;
+    } catch (error) {
+      // Log the error but return a standardized response object
+      console.error(`Error fetching biometric compatibility with ${userId}:`, error);
+      
+      // Return a structured null result instead of throwing
+      return {
+        user_id_a: null,
+        user_id_b: null,
+        biometric_type: "hrv",
+        compatibility_score: null,
+        compatibility_details: null,
+        message: "Failed to retrieve biometric compatibility data"
+      };
     }
   },
 };

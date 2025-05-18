@@ -124,42 +124,77 @@ export default function CompatibilityDetailPage({ params }: { params: any }) {
   // Mutation for sending connection request
   const sendConnectionRequest = useSendConnectionRequest();
 
-  useEffect(() => {
-    async function loadCompatibilityData() {
+// Add this to the useEffect that loads compatibility data
+useEffect(() => {
+  async function loadCompatibilityData() {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Get detailed compatibility report from API
+      const report = await CompatibilityService.getDetailedReport(id);
+      setCompatibilityData(report);
+
+      // Also fetch biometric compatibility data with improved error handling
       try {
-        setLoading(true);
-        setError(null);
-
-        // Get detailed compatibility report from API
-        const report = await CompatibilityService.getDetailedReport(id);
-        setCompatibilityData(report);
-
-        // Also fetch biometric compatibility data
-        try {
-          const biometricData = await axiosInstance.get(
-            `/api/v1/biometrics/compatibility/${id}`
+        console.log("Fetching biometric compatibility data for user:", id);
+        const biometricData = await CompatibilityService.getBiometricCompatibility(id);
+        console.log("Received biometric compatibility data:", biometricData);
+        
+        if (biometricData && typeof biometricData.compatibility_score === 'number') {
+          setBiometricCompatibility(biometricData);
+          
+          // Check if biometric dimension exists in report
+          const hasBiometricDimension = report.dimension_scores.some(
+            (dim: { dimension_id: string }) => dim.dimension_id === 'biometric'
           );
-          setBiometricCompatibility(biometricData.data);
-        } catch (bioErr) {
-          console.error("Error loading biometric compatibility:", bioErr);
-          // Non-critical, set default empty state
+          
+          // If biometric exists in compatibility API but not in report, trigger a refresh
+          if (!hasBiometricDimension && biometricData.compatibility_score !== null) {
+            console.log("Biometric dimension missing from report, refreshing data...");
+            const refreshedReport = await CompatibilityService.getDetailedReport(id);
+            setCompatibilityData(refreshedReport);
+          }
+        } else {
+          console.log("No valid biometric compatibility score found");
           setBiometricCompatibility({
             compatibility_score: null,
             biometric_type: "hrv",
             message: "Biometric data not available",
           });
         }
-
-        setLoading(false);
-      } catch (err) {
-        console.error("Error loading compatibility data:", err);
-        setError("Failed to load compatibility data. Please try again.");
-        setLoading(false);
+      } catch (bioErr) {
+        console.error("Error loading biometric compatibility:", bioErr);
+        setBiometricCompatibility({
+          compatibility_score: null,
+          biometric_type: "hrv",
+          message: "Biometric data not available",
+        });
       }
-    }
 
+      setLoading(false);
+    } catch (err) {
+      console.error("Error loading compatibility data:", err);
+      setError("Failed to load compatibility data. Please try again.");
+      setLoading(false);
+    }
+  }
+
+  loadCompatibilityData();
+  
+  // Add listener for biometric updates to refresh data
+  const handleBiometricUpdate = () => {
+    console.log("Biometric compatibility update detected, refreshing data...");
     loadCompatibilityData();
-  }, [id]);
+  };
+  
+  window.addEventListener('biometric-compatibility-updated', handleBiometricUpdate);
+  
+  return () => {
+    window.removeEventListener('biometric-compatibility-updated', handleBiometricUpdate);
+  };
+}, [id]);
+
 
   const handleSendConnectionRequest = () => {
     sendConnectionRequest.mutate(id, {
